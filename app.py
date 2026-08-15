@@ -38,7 +38,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER']        = os.path.join('static', 'uploads')
 app.config['MAX_CONTENT_LENGTH']   = 5 * 1024 * 1024  # 5MB
 
-GROQ_API_KEY = ""
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 GROQ_MODEL   = "meta-llama/llama-3.3-70b-instruct:free"
 ADMIN_EMAIL  = "Danielerastus001@gmail.com"
 GENRES       = ["General","Romance","Action","Fantasy","Sci-Fi",
