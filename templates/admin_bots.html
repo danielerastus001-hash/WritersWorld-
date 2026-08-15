@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Bot Control — WritersWorld{% endblock %}
+{% block page_title %}Bot Control Centre{% endblock %}
+{% block content %}
+
+<!-- GLOBAL CONTROL -->
+<div class="card" style="margin-bottom:20px; border-color:{% if global_active %}var(--green){% else %}var(--red){% endif %};">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <h3 style="color:{% if global_active %}var(--green){% else %}var(--red){% endif %}; margin-bottom:4px;">
+        🤖 Bot System — {% if global_active %}ACTIVE{% else %}PAUSED{% endif %}
+      </h3>
+      <p class="text-dim" style="font-size:0.85rem;">
+        {{ bot_data|length }} bots · 
+        {{ bot_data|selectattr('active')|list|length }} active · 
+        {{ pending|length }} stories pending approval
+      </p>
+    </div>
+    <form method="POST" action="{{ url_for('bot_toggle_global') }}">
+      <button type="submit" class="btn {% if global_active %}btn-red{% else %}btn-green{% endif %}">
+        {% if global_active %}⏸ Pause All Bots{% else %}▶ Activate All Bots{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- PENDING STORIES -->
+{% if pending %}
+<div class="card" style="margin-bottom:20px; border-color:var(--yellow);">
+  <h3 style="color:var(--yellow); margin-bottom:14px;">
+    ⏳ Pending Approval ({{ pending|length }})
+  </h3>
+  {% for item in pending %}
+  <div style="background:var(--dark); border-radius:8px; padding:14px; margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+      <div style="flex:1;">
+        <h4 style="color:var(--green); margin-bottom:4px;">{{ item.story.title }}</h4>
+        <p class="text-dim" style="font-size:0.78rem; margin-bottom:8px;">
+          by {{ item.bot }} · {{ item.story.genre }} · {{ item.story.created_at.strftime('%d %b %Y %H:%M') }}
+        </p>
+        <p style="font-size:0.85rem; line-height:1.6; color:var(--text);">{{ item.story.content[:300] }}...</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; min-width:120px;">
+        <form method="POST" action="{{ url_for('bot_approve_story', story_id=item.story.id) }}">
+          <button type="submit" class="btn btn-green btn-sm w-full">✓ Approve</button>
+        </form>
+        <form method="POST" action="{{ url_for('bot_reject_story', story_id=item.story.id) }}">
+          <button type="submit" class="btn btn-red btn-sm w-full">✗ Reject</button>
+        </form>
+        <a href="{{ url_for('read_story', story_id=item.story.id) }}" class="btn btn-gray btn-sm w-full" style="text-align:center;">👁 Full Story</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-bottom:20px; text-align:center; color:var(--text-dim); padding:16px;">
+  No stories pending approval.
+</div>
+{% endif %}
+
+<!-- BOT GROUPS -->
+{% set groups = [
+  ("morning",   "🌅", "#FFD700", "6AM - 11AM"),
+  ("afternoon", "☀️",  "#00CFFF", "12PM - 5PM"),
+  ("night",     "🌙", "#AA00FF", "6PM - 11PM")
+] %}
+
+{% for group_id, icon, color, hours in groups %}
+<div class="admin-section">
+  <h2 style="color:{{ color }};">{{ icon }} {{ group_id|title }} Group · {{ hours }}</h2>
+  {% for bot in bot_data if bot.group == group_id %}
+  <div class="card" style="margin-bottom:10px; border-left:4px solid {% if bot.active %}{{ color }}{% else %}var(--border){% endif %}; opacity:{% if not bot.active %}0.6{% else %}1{% endif %};">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:var(--dark); border:2px solid {{ color }}; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; color:{{ color }}; flex-shrink:0;">
+          {{ bot.name[0] }}
+        </div>
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:{% if bot.active %}var(--text){% else %}var(--text-dim){% endif %};">
+            {{ bot.name }}
+            {% if not bot.active %}<span style="color:var(--red); font-size:0.75rem; margin-left:6px;">PAUSED</span>{% endif %}
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">
+            {{ bot.genre }} · {{ bot.published }} published · {{ bot.drafts }} pending
+          </div>
+          <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">
+            Activity: <span style="color:{% if bot.activity == 'high' %}var(--green){% elif bot.activity == 'medium' %}var(--yellow){% else %}var(--red){% endif %}; font-weight:600;">{{ bot.activity|upper }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+        <!-- Activity level -->
+        <form method="POST" action="{{ url_for('bot_set_activity', bot_name=bot.name, level='low') }}" style="display:inline;">
+          <button type="submit" class="btn btn-sm" style="background:{% if bot.activity=='low' %}var(--red){% else %}var(--border){% endif %};color:var(--text);padding:4px 8px;font-size:0.72rem;">Low</button>
+        </form>
+        <form method="POST" action="{{ url_for('bot_set_activity', bot_name=bot.name, level='medium') }}" style="display:inline;">
+          <button type="submit" class="btn btn-sm" style="background:{% if bot.activity=='medium' %}var(--yellow){% else %}var(--border){% endif %};color:var(--black);padding:4px 8px;font-size:0.72rem;">Med</button>
+        </form>
+        <form method="POST" action="{{ url_for('bot_set_activity', bot_name=bot.name, level='high') }}" style="display:inline;">
+          <button type="submit" class="btn btn-sm" style="background:{% if bot.activity=='high' %}var(--green){% else %}var(--border){% endif %};color:var(--black);padding:4px 8px;font-size:0.72rem;">High</button>
+        </form>
+        <!-- Toggle active -->
+        <form method="POST" action="{{ url_for('bot_toggle', bot_name=bot.name) }}" style="display:inline;">
+          <button type="submit" class="btn btn-sm {% if bot.active %}btn-red{% else %}btn-green{% endif %}">
+            {% if bot.active %}⏸{% else %}▶{% endif %}
+          </button>
+        </form>
+        <!-- View profile -->
+        <a href="{{ url_for('admin_user_detail', user_id=bot.user.id) }}" class="btn btn-outline btn-sm">👤</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% endblock %}

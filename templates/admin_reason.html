@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Unpublish Story — WritersWorld{% endblock %}
+{% block page_title %}Unpublish Story{% endblock %}
+{% block content %}
+<div style="max-width:500px; margin:0 auto;">
+  <div class="card">
+    <h3 style="color:var(--red); margin-bottom:16px;">⚠️ Unpublish: {{ story.title }}</h3>
+    <p class="text-dim" style="font-size:0.88rem; margin-bottom:16px;">
+      The author will be notified with your reason. They must request approval to republish.
+    </p>
+    <form method="POST">
+      <div class="form-group">
+        <label>Reason for Unpublishing</label>
+        <textarea name="reason" placeholder="Explain why this story is being unpublished..." required style="min-height:140px;"></textarea>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="submit" class="btn btn-red">Unpublish Story</button>
+        <a href="{{ url_for('admin_panel') }}" class="btn btn-gray">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

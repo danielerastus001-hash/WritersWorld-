@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Activity Log — WritersWorld{% endblock %}
+{% block page_title %}Activity Log{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+  <span class="text-dim">{{ logs.total }} total actions</span>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('activity_read_all') }}" class="btn btn-outline btn-sm">✓ Read All</a>
+    <a href="{{ url_for('admin_panel') }}" class="btn btn-gray btn-sm">← Back to Admin</a>
+  </div>
+</div>
+
+<!-- FILTER BUTTONS -->
+<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;">
+  <a href="{{ url_for('activity_log') }}" class="btn btn-sm {% if not current_filter %}btn-green{% else %}btn-gray{% endif %}">All</a>
+  {% for action in actions|sort %}
+  <a href="{{ url_for('activity_log', filter=action) }}" class="btn btn-sm {% if current_filter == action %}btn-green{% else %}btn-gray{% endif %}" style="font-size:0.75rem;">{{ action }}</a>
+  {% endfor %}
+</div>
+
+{% set icons = {
+  'login':          ('🔑', '#8888ff'),
+  'signup':         ('✨', '#00ff88'),
+  'publish_story':  ('📖', '#00ff88'),
+  'unpublish_story':('📕', '#ff4455'),
+  'comment':        ('💬', '#88ccff'),
+  'like':           ('♥',  '#ff8888'),
+  'follow':         ('👤', '#88ffcc'),
+  'unfollow':       ('👤', '#888899'),
+  'view_story':     ('👁',  '#aaaaaa'),
+  'submit_entry':   ('🏆', '#ffcc00'),
+  'password_reset_request': ('🔐', '#ffcc00'),
+  'bot_post':       ('🤖', '#aa88ff'),
+} %}
+
+{% if logs.items %}
+<div style="background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden;">
+  {% for log in logs.items %}
+  {% set ic = icons.get(log.action, ('📋', '#888899')) %}
+  <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; border-bottom:1px solid var(--border);">
+    <div style="font-size:1rem; width:24px; text-align:center; flex-shrink:0; margin-top:2px;">{{ ic[0] }}</div>
+    <div style="flex:1; min-width:0;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
+        <span style="color:{{ ic[1] }}; font-size:0.75rem; font-weight:700; background:{{ ic[1] }}22; padding:2px 8px; border-radius:10px;">{{ log.action }}</span>
+        {% if log.user %}
+        <a href="{{ url_for('admin_user_detail', user_id=log.user_id) }}" style="color:var(--green); font-size:0.82rem; font-weight:600;">
+          {{ log.user.username }}
+          {% if log.ip_address == 'bot' %}<span style="color:#aa88ff; font-size:0.7rem;">(bot)</span>{% endif %}
+        </a>
+        {% else %}
+        <span style="color:var(--text-dim); font-size:0.82rem;">Guest</span>
+        {% endif %}
+      </div>
+      <div style="color:var(--text); font-size:0.85rem;">{{ log.detail }}</div>
+      <div style="color:var(--text-dim); font-size:0.72rem; margin-top:2px;">
+        {{ log.created_at.strftime('%d %b %Y · %H:%M:%S') }}
+        {% if log.ip_address and log.ip_address != 'bot' %}· IP: {{ log.ip_address }}{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pagination" style="margin-top:16px;">
+  {% if logs.has_prev %}
+  <a href="{{ url_for('activity_log', page=logs.prev_num, filter=current_filter) }}">← Prev</a>
+  {% endif %}
+  <span class="current">{{ logs.page }} / {{ logs.pages }}</span>
+  {% if logs.has_next %}
+  <a href="{{ url_for('activity_log', page=logs.next_num, filter=current_filter) }}">Next →</a>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="icon">📋</div>
+  <p>No activity logged yet.</p>
+</div>
+{% endif %}
+{% endblock %}

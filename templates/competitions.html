@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Competitions — WritersWorld{% endblock %}
+{% block page_title %}Competitions{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <p class="text-dim" style="font-size:0.88rem; margin:0;">Enter writing competitions and win recognition.</p>
+  <a href="{{ url_for('competitions') }}" class="btn btn-outline btn-sm">✓ Read All</a>
+</div>
+
+{% if competitions %}
+{% for comp in competitions %}
+<div class="comp-card">
+  {% if comp.image %}
+  <img src="{{ url_for('static', filename='uploads/' + comp.image) }}" alt="competition image">
+  {% endif %}
+  <span class="comp-status status-{{ comp.status() }}">{{ comp.status() }}</span>
+  <h3 style="color:var(--green); margin:8px 0;">{{ comp.title }}</h3>
+  <p style="font-size:0.88rem; color:var(--text); margin-bottom:10px;">{{ comp.description[:150] }}{% if comp.description|length > 150 %}...{% endif %}</p>
+  <div class="comp-dates">
+    <span>📅 Start: {{ comp.start_date.strftime('%d %b %Y') }}</span>
+    <span>🏁 End: {{ comp.end_date.strftime('%d %b %Y') }}</span>
+    <span>🏆 Winners: {{ comp.winners_date.strftime('%d %b %Y') }}</span>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+    <a href="{{ url_for('competition_view', comp_id=comp.id) }}" class="btn btn-outline btn-sm">See More</a>
+    {% if comp.status() == 'CURRENT' and current_user.is_authenticated %}
+    <a href="{{ url_for('competition_enter', comp_id=comp.id) }}" class="btn btn-green btn-sm">Apply Now</a>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">🏆</div>
+  <p>No competitions yet. Check back soon.</p>
+</div>
+{% endif %}
+{% endblock %}

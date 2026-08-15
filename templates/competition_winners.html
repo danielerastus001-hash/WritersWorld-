@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Winners — {{ comp.title }}{% endblock %}
+{% block page_title %}Competition Winners{% endblock %}
+{% block content %}
+
+<div style="text-align:center; margin-bottom:24px;">
+  <h2 style="color:var(--green); font-size:1.4rem; margin-bottom:6px;">🏆 {{ comp.title }}</h2>
+  <p class="text-dim" style="font-size:0.88rem;">Winners announced {{ comp.winners_date.strftime('%d %B %Y') }}</p>
+</div>
+
+{% set pos_icons  = {1: '🥇', 2: '🥈', 3: '🥉'} %}
+{% set pos_labels = {1: '1st Place', 2: '2nd Place', 3: '3rd Place'} %}
+{% set pos_colors = {1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32'} %}
+
+{% if winners %}
+{% for w in winners|sort(attribute='position') %}
+<div class="card" style="margin-bottom:16px; border-left:4px solid {{ pos_colors.get(w.position, '#00ff88') }}; text-align:center; padding:24px;">
+  <div style="font-size:3rem; margin-bottom:8px;">{{ pos_icons.get(w.position, '🏅') }}</div>
+  <div style="color:{{ pos_colors.get(w.position, '#00ff88') }}; font-weight:700; font-size:0.85rem; margin-bottom:10px;">
+    {{ pos_labels.get(w.position, 'Position ' ~ w.position) }}
+  </div>
+  <h3 style="color:var(--green); font-size:1.1rem; margin-bottom:6px;">{{ w.entry.title }}</h3>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:10px;">
+    by <a href="{{ url_for('profile', user_id=w.user.id) }}" style="color:var(--green);">{{ w.user.username }}</a>
+  </p>
+  {% if w.admin_note %}
+  <p style="color:var(--text); font-size:0.85rem; font-style:italic; margin-bottom:12px;">"{{ w.admin_note }}"</p>
+  {% endif %}
+  <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+    <a href="{{ url_for('competition_view', comp_id=comp.id) }}" class="btn btn-outline btn-sm">← Back to Competition</a>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">🏆</div>
+  <p>Winners have not been announced yet.</p>
+  <a href="{{ url_for('competition_view', comp_id=comp.id) }}" class="btn btn-outline">← Back to Competition</a>
+</div>
+{% endif %}
+
+{% endblock %}

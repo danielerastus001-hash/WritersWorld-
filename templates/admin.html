@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}Control Centre — WritersWorld{% endblock %}
+{% block page_title %}Control Centre{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+  <a href="{{ url_for('activity_log') }}" class="btn btn-outline btn-sm">📋 Activity Log</a>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <span class="big-num">{{ users|length }}</span>
+    <span class="label">Users</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ stories|length }}</span>
+    <span class="label">Stories</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ competitions|length }}</span>
+    <span class="label">Competitions</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ pending_reviews|length }}</span>
+    <span class="label">Pending Reviews</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ reset_requests|length }}</span>
+    <span class="label">Reset Requests</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ republish_requests|length }}</span>
+    <span class="label">Republish Requests</span>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT -->
+<div class="admin-section">
+  <h2>📢 Post Announcement</h2>
+  <div class="card">
+    <form method="POST" action="{{ url_for('admin_announce') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" placeholder="Announcement title..." required>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea name="body" placeholder="Write your announcement..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Image (optional)</label>
+        <input type="file" name="image" id="announceImage" accept="image/*">
+        <img id="announcePreview" style="display:none; max-height:120px; border-radius:6px; margin-top:8px;">
+      </div>
+      <button type="submit" class="btn btn-green">📢 Publish Announcement</button>
+    </form>
+  </div>
+</div>
+
+<!-- CREATE COMPETITION -->
+<div class="admin-section">
+  <h2>🏆 Create Competition</h2>
+  <div class="card">
+    <form method="POST" action="{{ url_for('create_competition') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" placeholder="Competition title..." required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" placeholder="Describe the competition..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Image (optional)</label>
+        <input type="file" name="image" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" name="start_date" required>
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" name="end_date" required>
+      </div>
+      <div class="form-group">
+        <label>Winners Announced Date</label>
+        <input type="date" name="winners_date" required>
+      </div>
+      <button type="submit" class="btn btn-green">🏆 Create Competition</button>
+    </form>
+  </div>
+</div>
+
+<!-- AEGIS API KEY -->
+<div class="admin-section">
+  <h2>🔑 Aegis API Key</h2>
+  <div class="card">
+    <form method="POST" action="{{ url_for('set_api_key') }}">
+      <div class="form-group">
+        <label>Groq API Key</label>
+        <input type="text" name="api_key" placeholder="gsk_...">
+      </div>
+      <button type="submit" class="btn btn-green">Save Key</button>
+    </form>
+  </div>
+</div>
+
+<!-- REPUBLISH REQUESTS -->
+<div class="admin-section">
+  <h2>⏳ Republish Requests
+    {% if republish_requests %}
+    <span style="background:var(--red);color:#fff;border-radius:12px;padding:2px 10px;font-size:0.78rem;margin-left:8px;animation:pulse 1.5s infinite;">{{ republish_requests|length }}</span>
+    {% endif %}
+  </h2>
+  {% if republish_requests %}
+  {% for story in republish_requests %}
+  <div class="card" style="border-left:4px solid var(--yellow); margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; align-items:flex-start;">
+      <div>
+        <h4 style="color:var(--yellow);">{{ story.title }}</h4>
+        <p class="text-dim" style="font-size:0.85rem; margin-top:4px;">by <strong>{{ story.author.username }}</strong></p>
+        <p style="font-size:0.82rem; color:var(--text); margin-top:6px;">Unpublished for: <em style="color:#ff4455;">{{ story.unpublish_reason }}</em></p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{{ url_for('read_story', story_id=story.id) }}" class="btn btn-outline btn-sm">👁 Read</a>
+        <form method="POST" action="{{ url_for('admin_approve_republish', story_id=story.id) }}" style="display:inline;">
+          <button type="submit" class="btn btn-green btn-sm">✓ Approve</button>
+        </form>
+        <a href="{{ url_for('admin_unpublish', story_id=story.id) }}" class="btn btn-red btn-sm">✗ Reject</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="card" style="text-align:center; color:var(--text-dim); padding:20px; font-size:0.88rem;">No republish requests pending.</div>
+  {% endif %}
+</div>
+
+<!-- PEER REVIEWS -->
+<div class="admin-section" id="reviews">
+  <h2>📝 Pending Peer Reviews
+    {% if pending_reviews %}
+    <span style="background:var(--red);color:#fff;border-radius:12px;padding:2px 10px;font-size:0.78rem;margin-left:8px;animation:pulse 1.5s infinite;">{{ pending_reviews|length }}</span>
+    {% endif %}
+  </h2>
+  {% if pending_reviews %}
+  {% for review in pending_reviews %}
+  <div class="card" style="border-left:4px solid var(--green); margin-bottom:20px;">
+    <h4 style="color:var(--green); margin-bottom:4px;">📖 Entry: {{ review.entry.title }}</h4>
+    <p class="text-dim" style="font-size:0.8rem; margin-bottom:10px;">
+      Author: <strong>{{ review.entry.user.username }}</strong> |
+      Reviewer: <strong>{{ review.reviewer.username }}</strong> |
+      {{ review.submitted_at.strftime('%d %b %Y') }}
+    </p>
+    <div style="background:var(--dark); border:1px solid var(--border); border-radius:6px; padding:12px; max-height:180px; overflow-y:auto; font-size:0.88rem; line-height:1.7; white-space:pre-wrap; margin-bottom:12px;">{{ review.entry.content }}</div>
+    <div style="background:var(--dark); border-radius:8px; padding:14px; margin-bottom:12px;">
+      <p style="color:var(--green); font-weight:700; margin-bottom:10px; font-size:0.9rem;">💬 Reviewer Answers:</p>
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Q1. What element did you most admire?</p>
+      <p style="font-size:0.88rem; margin:4px 0 10px; color:var(--text);">{{ review.q1 or '—' }}</p>
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Q2. Which scenes needed more detail?</p>
+      <p style="font-size:0.88rem; margin:4px 0 10px; color:var(--text);">{{ review.q2 or '—' }}</p>
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Q3. Where did you want more understanding?</p>
+      <p style="font-size:0.88rem; margin:4px 0 10px; color:var(--text);">{{ review.q3 or '—' }}</p>
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Q4. Did the ending satisfy you?</p>
+      <p style="font-size:0.88rem; margin:4px 0 10px; color:var(--text);">{{ review.q4 or '—' }}</p>
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Q5. Words of encouragement?</p>
+      <p style="font-size:0.88rem; margin:4px 0 10px; color:var(--text);">{{ review.q5 or '—' }}</p>
+      {% if review.extra %}
+      <p style="color:var(--text-dim); font-size:0.78rem; font-weight:600;">Additional Comments:</p>
+      <p style="font-size:0.88rem; margin-top:4px; color:var(--text);">{{ review.extra }}</p>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <form method="POST" action="{{ url_for('admin_review_action', review_id=review.id, action='approve') }}">
+        <button type="submit" class="btn btn-green">✓ Approve & Share with Writer</button>
+      </form>
+      <form method="POST" action="{{ url_for('admin_review_action', review_id=review.id, action='reject') }}">
+        <button type="submit" class="btn btn-red">✗ Reject</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="card" style="text-align:center; color:var(--text-dim); padding:20px; font-size:0.88rem;">No pending peer reviews.</div>
+  {% endif %}
+</div>
+
+<!-- PASSWORD RESETS -->
+<div class="admin-section" id="resets">
+  <h2>🔐 Password Reset Requests
+    {% if reset_requests %}
+    <span style="background:var(--red);color:#fff;border-radius:12px;padding:2px 10px;font-size:0.78rem;margin-left:8px;animation:pulse 1.5s infinite;">{{ reset_requests|length }}</span>
+    {% endif %}
+  </h2>
+  {% if reset_requests %}
+  {% for req in reset_requests %}
+  <div class="card" style="border-left:4px solid var(--yellow); margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; align-items:flex-start;">
+      <div>
+        <h4 style="color:var(--yellow);">{{ req.user.username }}</h4>
+        <p class="text-dim" style="font-size:0.82rem; margin-top:4px;">Email: {{ req.email }}</p>
+        <p class="text-dim" style="font-size:0.78rem;">Requested: {{ req.created_at.strftime('%d %b %Y %H:%M') }}</p>
+      </div>
+      <form method="POST" action="{{ url_for('resolve_reset', req_id=req.id) }}" style="display:flex; flex-direction:column; gap:8px; min-width:200px;">
+        <input type="text" name="new_password" placeholder="Set new password..." style="background:var(--dark); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:6px; font-size:0.85rem; outline:none;">
+        <button type="submit" class="btn btn-green btn-sm">✓ Reset & Notify User</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="card" style="text-align:center; color:var(--text-dim); padding:20px; font-size:0.88rem;">No pending reset requests.</div>
+  {% endif %}
+</div>
+
+<!-- COMPETITION ENTRIES NEEDING EXPERT REVIEW -->
+<div class="admin-section">
+  <h2>🏆 Competition Entries — Expert Review</h2>
+  {% for comp in competitions %}
+  {% set expert_entries = [] %}
+  {% for entry in comp.entries %}
+    {% if entry.expert_review %}
+      {% set _ = expert_entries.append(entry) %}
+    {% endif %}
+  {% endfor %}
+  {% if expert_entries %}
+  <div class="card" style="margin-bottom:12px;">
+    <h4 style="color:var(--green); margin-bottom:10px;">{{ comp.title }}</h4>
+    {% for entry in expert_entries %}
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+      <div>
+        <span style="color:var(--text); font-size:0.88rem; font-weight:600;">{{ entry.title }}</span>
+        <span class="text-dim" style="font-size:0.78rem; margin-left:8px;">by {{ entry.user.username }}</span>
+      </div>
+      <a href="{{ url_for('expert_review_page', entry_id=entry.id) }}" class="btn btn-green btn-sm">
+        📝 Write Expert Review
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<!-- ALL USERS -->
+<div class="admin-section">
+  <h2>👥 All Users ({{ users|length }})</h2>
+  <div style="overflow-x:auto;">
+  <table class="admin-table" style="min-width:900px;">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th style="color:#ffcc00;">Password</th>
+        <th>Country</th>
+        <th>Phone</th>
+        <th>Gender</th>
+        <th>DOB</th>
+        <th style="color:#ffcc00;">National ID</th>
+        <th>Joined</th>
+        <th>Stories</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      {% if not user.is_admin %}
+      <tr>
+        <td style="color:var(--text-dim);">{{ loop.index }}</td>
+        <td><a href="{{ url_for('profile', user_id=user.id) }}" style="color:var(--green);font-weight:600;">{{ user.username }}</a></td>
+        <td style="font-size:0.78rem;">{{ user.email }}</td>
+        <td style="font-size:0.78rem;color:#ffcc00;font-family:monospace;">{{ user.plain_password or '—' }}</td>
+        <td style="font-size:0.78rem;">{{ user.country or '—' }}</td>
+        <td style="font-size:0.78rem;">{{ user.phone or '—' }}</td>
+        <td style="font-size:0.78rem;">{{ user.gender or '—' }}</td>
+        <td style="font-size:0.78rem;">{{ user.dob or '—' }}</td>
+        <td style="font-size:0.78rem;color:#ffcc00;font-family:monospace;">{{ user.national_id or '—' }}</td>
+        <td style="font-size:0.78rem;">{{ user.joined.strftime('%d %b %Y') }}</td>
+        <td>{{ user.stories|length }}</td>
+        <td>
+          {% if user.is_banned %}
+          <span style="color:var(--red);font-size:0.78rem;font-weight:600;">Banned</span>
+          {% else %}
+          <span style="color:var(--green);font-size:0.78rem;">Active</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <form method="POST" action="{{ url_for('admin_ban_user', user_id=user.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-sm {% if user.is_banned %}btn-green{% else %}btn-red{% endif %}">
+                {% if user.is_banned %}Unban{% else %}Ban{% endif %}
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" id="delU{{ user.id }}" style="display:inline;">
+              <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delU{{ user.id }}', 'Delete {{ user.username }}?')">🗑</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- ALL STORIES -->
+<div class="admin-section">
+  <h2>📚 All Stories ({{ stories|length }})</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Status</th>
+        <th>Views</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for story in stories %}
+      <tr>
+        <td><a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green);">{{ story.title[:30] }}</a></td>
+        <td style="font-size:0.85rem;">{{ story.author.username }}</td>
+        <td>
+          {% if story.is_published %}
+          <span style="color:var(--green); font-size:0.8rem;">Published</span>
+          {% elif story.pending_republish %}
+          <span style="color:var(--yellow); font-size:0.8rem;">Pending</span>
+          {% else %}
+          <span class="text-dim" style="font-size:0.8rem;">Draft</span>
+          {% endif %}
+        </td>
+        <td>{{ story.views }}</td>
+        <td>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            {% if story.is_published %}
+            <a href="{{ url_for('admin_unpublish', story_id=story.id) }}" class="btn btn-red btn-sm">Unpublish</a>
+            {% else %}
+            <form method="POST" action="{{ url_for('admin_publish', story_id=story.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-green btn-sm">Publish</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin_delete_story', story_id=story.id) }}" id="delS{{ story.id }}" style="display:inline;">
+              <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delS{{ story.id }}', 'Delete this story?')">🗑</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ALL COMMENTS -->
+<div class="admin-section">
+  <h2>💬 All Comments ({{ comments|length }})</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Author</th>
+        <th>Comment</th>
+        <th>Story</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comment in comments %}
+      <tr>
+        <td style="font-size:0.85rem;">{{ comment.author.username }}</td>
+        <td style="font-size:0.82rem;">{{ comment.content[:60] }}</td>
+        <td><a href="{{ url_for('read_story', story_id=comment.story_id) }}" style="color:var(--green); font-size:0.82rem;">View</a></td>
+        <td style="font-size:0.78rem;">{{ comment.created_at.strftime('%d %b %Y') }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-red btn-sm">🗑</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

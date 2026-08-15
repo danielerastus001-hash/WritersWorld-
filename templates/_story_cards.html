@@ -1,0 +1,20 @@
+{% for story in stories.items %}
+<div class="card story-card">
+  {% if story.cover %}
+  <img src="{{ url_for('static', filename='uploads/' + story.cover) }}" class="story-cover" alt="cover">
+  {% endif %}
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+    <h3><a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green);">{{ story.title }}</a></h3>
+    <span class="genre-tag">{{ story.genre }}</span>
+  </div>
+  <div class="meta">
+    <span>by <a href="{{ url_for('profile', user_id=story.author.id) }}">{{ story.author.username }}</a></span>
+    <span>👁 {{ story.views }}</span>
+    <span>♥ {{ story.like_count() }}</span>
+    <span>💬 {{ story.comment_count() }}</span>
+    <span>{{ story.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  <p class="excerpt">{{ story.content[:200] }}</p>
+  <a href="{{ url_for('read_story', story_id=story.id) }}" class="btn btn-outline btn-sm" style="align-self:flex-start;">Read Story</a>
+</div>
+{% endfor %}

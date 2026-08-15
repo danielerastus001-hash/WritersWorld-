@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Expert Review — WritersWorld{% endblock %}
+{% block page_title %}Expert Review{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_panel') }}" class="btn btn-gray btn-sm" style="margin-bottom:16px;">← Back to Admin</a>
+
+<div class="card" style="margin-bottom:16px;">
+  <h3 style="color:var(--green); margin-bottom:8px;">{{ entry.title }}</h3>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:12px;">by {{ entry.user.username }}</p>
+  <p style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">{{ entry.content }}</p>
+</div>
+
+<div class="card">
+  <h3 style="color:var(--green); margin-bottom:12px;">
+    {% if existing %}✏️ Edit Expert Review{% else %}📝 Write Expert Review{% endif %}
+  </h3>
+  <form method="POST">
+    <div class="form-group">
+      <label>Review Content</label>
+      <textarea name="content" rows="8" placeholder="Write your expert feedback here...">{{ existing.content if existing else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-green">
+      {% if existing %}Update Review{% else %}Submit Review{% endif %}
+    </button>
+  </form>
+</div>
+
+{% endblock %}

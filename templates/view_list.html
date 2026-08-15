@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ reading_list.name }} — WritersWorld{% endblock %}
+{% block page_title %}Reading List{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <div>
+    <h2 style="color:var(--green);">🔖 {{ reading_list.name }}</h2>
+    <span class="text-dim" style="font-size:0.85rem;">{{ reading_list.stories|length }} stories · Created {{ reading_list.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  <a href="{{ url_for('reading_lists') }}" class="btn btn-gray btn-sm">← Back to Lists</a>
+</div>
+
+{% if reading_list.stories %}
+{% for story in reading_list.stories %}
+<div class="card story-card">
+  <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <h3><a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green);">{{ story.title }}</a></h3>
+    <span class="genre-tag">{{ story.genre }}</span>
+  </div>
+  <div class="meta">
+    <span>by <a href="{{ url_for('profile', user_id=story.author.id) }}">{{ story.author.username }}</a></span>
+    <span>👁 {{ story.views }}</span>
+    <span>♥ {{ story.like_count() }}</span>
+    <span>{{ story.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  <p class="excerpt">{{ story.content[:150] }}</p>
+  <a href="{{ url_for('read_story', story_id=story.id) }}" class="btn btn-outline btn-sm" style="align-self:flex-start;">Read</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">📭</div>
+  <p>No stories in this list yet.</p>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-green">Browse Stories</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.backup_*
+instance/
+instance_backup_*/
+config.json
+stories.db
+bot_state.json
+bot_activity.json
+sherlock/
+holehe/

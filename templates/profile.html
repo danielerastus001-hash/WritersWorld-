@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ user.username }} — WritersWorld{% endblock %}
+{% block page_title %}Profile{% endblock %}
+{% block content %}
+<div class="profile-header">
+  <div class="avatar">
+    {% if user.avatar and user.avatar != 'default.png' %}
+    <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+    {% else %}
+    {{ user.username[0].upper() }}
+    {% endif %}
+  </div>
+  <div class="profile-info">
+    <h2>{{ user.username }}</h2>
+    {% if user.bio %}
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-top:4px;">{{ user.bio }}</p>
+    {% endif %}
+    <p style="color:var(--text-dim); font-size:0.8rem; margin-top:4px;">Joined {{ user.joined.strftime('%B %Y') }}</p>
+    {% if user.country %}
+    <p style="color:var(--text-dim); font-size:0.8rem; margin-top:2px;">📍 {{ user.country }}{% if user.gender %} · {{ user.gender }}{% endif %}</p>
+    {% endif %}
+    <div class="profile-stats">
+      <div class="stat-item">
+        <span class="num">{{ stories|length }}</span>
+        <span class="label">Stories</span>
+      </div>
+      <div class="stat-item">
+        <span class="num" id="follower-count">{{ user.follower_count() }}</span>
+        <span class="label">Followers</span>
+      </div>
+      <div class="stat-item">
+        <span class="num">{{ user.following_count() }}</span>
+        <span class="label">Following</span>
+      </div>
+      {% if is_owner %}
+      <div class="stat-item">
+        <span class="num" style="color:#00CFFF;">💎 {{ user.gems or 0 }}</span>
+        <span class="label">Gems</span>
+      </div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+      {% if is_owner %}
+      <a href="{{ url_for('edit_profile') }}" class="btn btn-outline btn-sm">✏️ Edit Profile</a>
+      <a href="{{ url_for('my_stats') }}" class="btn btn-outline btn-sm">📊 My Stats</a>
+      {% else %}
+      <button id="follow-btn" onclick="followUser({{ user.id }})"
+        class="btn btn-sm {% if following %}btn-gray{% else %}btn-outline{% endif %}">
+        {% if following %}Unfollow{% else %}Follow{% endif %}
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+
+{% if awards is defined and awards %}
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="color:var(--green); margin-bottom:14px;">🏅 Awards & Badges</h3>
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    {% for award in awards %}
+    <div style="background:var(--dark); border:1px solid var(--green-dark); border-radius:10px; padding:10px 14px; text-align:center; min-width:90px;">
+      <div style="font-size:1.8rem; line-height:1;">{{ award.icon }}</div>
+      <div style="color:var(--green); font-size:0.78rem; font-weight:700; margin-top:6px;">{{ award.name }}</div>
+      <div style="color:var(--text-dim); font-size:0.7rem; margin-top:2px;">{{ award.reason }}</div>
+      <div style="color:var(--text-dim); font-size:0.68rem; margin-top:2px;">{{ award.created_at.strftime('%d %b %Y') }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if current_user.is_authenticated and current_user.is_admin %}
+<div class="card" style="border-color:var(--red); margin-bottom:20px;">
+  <h3 style="color:var(--red); margin-bottom:10px;">⚡ Admin View</h3>
+  <p style="font-size:0.85rem; color:var(--text-dim);">Email: {{ user.email }}</p>
+  <p style="font-size:0.85rem; color:var(--text-dim);">ID: {{ user.id }}</p>
+  <p style="font-size:0.85rem; color:var(--text-dim);">Banned: {{ user.is_banned }}</p>
+  <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+    <form method="POST" action="{{ url_for('admin_ban_user', user_id=user.id) }}">
+      <button type="submit" class="btn btn-red btn-sm">
+        {% if user.is_banned %}Unban{% else %}Ban{% endif %} User
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" id="delUserForm">
+      <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delUserForm', 'Delete this user permanently?')">Delete User</button>
+    </form>
+    <a href="{{ url_for('chat', user_id=user.id) }}" class="btn btn-outline btn-sm">💬 Message User</a>
+  </div>
+</div>
+{% endif %}
+
+<h3 style="color:var(--green); margin-bottom:14px;">📖 Published Stories</h3>
+{% if stories %}
+{% for story in stories %}
+<div class="card story-card">
+  <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <h3><a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green);">{{ story.title }}</a></h3>
+    <span class="genre-tag">{{ story.genre }}</span>
+  </div>
+  <div class="meta">
+    <span>👁 {{ story.views }}</span>
+    <span>♥ {{ story.like_count() }}</span>
+    <span>💬 {{ story.comment_count() }}</span>
+    <span>{{ story.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  <p class="excerpt">{{ story.content[:150] }}</p>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">📭</div>
+  <p>No published stories yet.</p>
+  {% if is_owner %}
+  <a href="{{ url_for('write') }}" class="btn btn-green">Write Your First Story</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if is_owner and drafts %}
+<h3 style="color:var(--text-dim); margin:24px 0 14px;">📝 Drafts</h3>
+{% for story in drafts %}
+<div class="card story-card" style="border-color:#333;">
+  <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <h3 style="color:var(--text-dim);">{{ story.title }}</h3>
+    <span style="color:var(--text-dim); font-size:0.8rem;">Draft</span>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:8px;">
+    <a href="{{ url_for('edit_story', story_id=story.id) }}" class="btn btn-outline btn-sm">Edit</a>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

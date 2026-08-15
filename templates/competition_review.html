@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Peer Review — WritersWorld{% endblock %}
+{% block page_title %}Peer Review{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="color:var(--green);">📝 Reviewing: {{ entry.title }}</h3>
+  <p class="text-dim" style="font-size:0.85rem;">by {{ entry.user.username }}</p>
+  <div style="margin-top:12px; background:var(--dark); border-radius:6px; padding:14px; font-size:0.9rem; line-height:1.7; max-height:200px; overflow-y:auto;">
+    {{ entry.content[:500] }}{% if entry.content|length > 500 %}...{% endif %}
+  </div>
+</div>
+
+<form method="POST">
+  <div class="review-question">
+    <label>1. What element of this piece did you most admire, and why?</label>
+    <textarea name="q1" required placeholder="Your answer..."></textarea>
+  </div>
+  <div class="review-question">
+    <label>2. Which scenes would you have liked expanded with more detail, dialogue, or description?</label>
+    <textarea name="q2" required placeholder="Your answer..."></textarea>
+  </div>
+  <div class="review-question">
+    <label>3. Where did you want to better understand why a moment mattered to the writer?</label>
+    <textarea name="q3" required placeholder="Your answer..."></textarea>
+  </div>
+  <div class="review-question">
+    <label>4. Did the ending satisfy you? Why or why not?</label>
+    <textarea name="q4" required placeholder="Your answer..."></textarea>
+  </div>
+  <div class="review-question">
+    <label>5. What words of encouragement do you have for this writer?</label>
+    <textarea name="q5" required placeholder="Your answer..."></textarea>
+  </div>
+  <div class="review-question">
+    <label>Additional Comments (optional)</label>
+    <textarea name="extra" placeholder="Any other thoughts..."></textarea>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+    <button type="submit" class="btn btn-green">Submit Review</button>
+    <a href="{{ url_for('competition_view', comp_id=entry.competition_id) }}" class="btn btn-gray">Cancel</a>
+  </div>
+</form>
+{% endblock %}

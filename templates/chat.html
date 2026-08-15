@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Messages — WritersWorld{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block content %}
+<div style="max-width:600px; margin:0 auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+    <h3 style="color:var(--green);">💬 Chat with {{ user.username }}</h3>
+    <a href="{{ url_for('admin_panel') if current_user.is_admin else url_for('notifications') }}" class="btn btn-gray btn-sm">← Back</a>
+  </div>
+  <div id="chatBox" style="min-height:200px; max-height:55vh; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:12px; background:var(--dark); border-radius:10px; border:1px solid var(--border); margin-bottom:16px;">
+    {% if messages %}
+      {% for msg in messages %}
+        {% if current_user.is_admin %}
+          {% set is_mine = (msg.is_reply == false) %}
+        {% else %}
+          {% set is_mine = (msg.is_reply == true) %}
+        {% endif %}
+        <div style="display:flex; flex-direction:column; align-items:{% if is_mine %}flex-end{% else %}flex-start{% endif %};">
+          <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:3px; {% if is_mine %}text-align:right;{% endif %}">
+            {% if is_mine %}You{% else %}{% if current_user.is_admin %}{{ user.username }}{% else %}Admin{% endif %}{% endif %}
+            · {{ msg.created_at.strftime('%d %b %H:%M') }}
+          </div>
+          <div style="max-width:82%; padding:10px 14px; word-wrap:break-word; font-size:0.9rem; line-height:1.5; border-radius:{% if is_mine %}14px 14px 4px 14px{% else %}14px 14px 14px 4px{% endif %}; {% if is_mine %}background:var(--green-dark); color:var(--green); border:1px solid var(--green);{% else %}background:var(--card); color:var(--text); border:1px solid var(--border);{% endif %}">
+            {{ msg.message }}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center; padding:30px; color:var(--text-dim); font-size:0.88rem;">No messages yet.</div>
+    {% endif %}
+  </div>
+  <form method="POST" style="display:flex; gap:10px; align-items:flex-end;">
+    <textarea name="message" placeholder="Type your message..." style="flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:8px; resize:none; height:72px; outline:none; font-family:inherit; font-size:0.9rem;" required></textarea>
+    <button type="submit" class="btn btn-green" style="height:44px; padding:0 22px;">Send ➤</button>
+  </form>
+</div>
+<script>
+  var box = document.getElementById('chatBox');
+  if (box) box.scrollTop = box.scrollHeight;
+</script>
+{% endblock %}

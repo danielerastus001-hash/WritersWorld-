@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — WritersWorld{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+{% if announcements %}
+{% set a = announcements[0] %}
+<div class="announcement-card">
+  <h4>📢 {{ a.title }}</h4>
+  <p style="font-size:0.88rem; color:var(--text-dim);">{{ a.date }}</p>
+  <p style="margin-top:6px; font-size:0.9rem;">{{ a.body }}</p>
+  {% if a.image %}
+  <img src="{{ url_for('static', filename='uploads/' + a.image) }}" alt="announcement">
+  {% endif %}
+</div>
+<a href="{{ url_for('history') }}" class="btn btn-outline btn-sm mb-16">View All Announcements</a>
+{% endif %}
+
+{% if competitions %}
+<div class="card mb-16">
+  <h3 style="color:var(--green); margin-bottom:12px;">🏆 Latest Competition</h3>
+  {% set c = competitions[0] %}
+  {% if c.image %}
+  <img src="{{ url_for('static', filename='uploads/' + c.image) }}" alt="competition image" style="width:100%; border-radius:8px; margin-bottom:10px;">
+  {% endif %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+    <div>
+      <span class="comp-status status-{{ c.status() }}">{{ c.status() }}</span>
+      <a href="{{ url_for('competition_view', comp_id=c.id) }}" style="color:var(--text); font-size:0.9rem; margin-left:8px;">{{ c.title }}</a>
+    </div>
+    <a href="{{ url_for('competition_view', comp_id=c.id) }}" class="btn btn-outline btn-sm">See More</a>
+  </div>
+  <a href="{{ url_for('competitions') }}" class="btn btn-outline btn-sm" style="margin-top:10px;">View All Competitions</a>
+</div>
+{% endif %}
+
+<form id="searchForm" method="GET" action="{{ url_for('dashboard') }}">
+  <div class="search-bar">
+    <input type="text" id="searchInput" name="search" placeholder="Search stories..." value="{{ search }}">
+    <select name="genre" id="genreFilter">
+      <option value="">All Genres</option>
+      {% for g in genres %}
+      <option value="{{ g }}" {% if g == selected_genre %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-green">Search</button>
+  </div>
+</form>
+
+{% if stories.items %}
+<div id="story-feed">
+{% include "_story_cards.html" %}
+</div>
+
+<div id="feed-loading" style="text-align:center; padding:20px; color:var(--text-dim); display:none;">
+  ⏳ Loading more stories...
+</div>
+<div id="feed-end" style="text-align:center; padding:20px; color:var(--text-dim); display:none;">
+  You've reached the end 🎉
+</div>
+
+<script>
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+(function() {
+  let currentPage = {{ stories.page }};
+  let hasNext = {{ 'true' if stories.has_next else 'false' }};
+  let loading = false;
+  const feed = document.getElementById('story-feed');
+  const loadingEl = document.getElementById('feed-loading');
+  const endEl = document.getElementById('feed-end');
+  const search = {{ (search or '')|tojson }};
+  const genre = {{ (selected_genre or '')|tojson }};
+
+  function loadMore() {
+    if (loading || !hasNext) return;
+    loading = true;
+    loadingEl.style.display = 'block';
+    const nextPage = currentPage + 1;
+    const params = new URLSearchParams({page: nextPage, ajax: '1'});
+    if (search) params.set('search', search);
+    if (genre) params.set('genre', genre);
+    fetch('{{ url_for("dashboard") }}?' + params.toString())
+      .then(r => r.text())
+      .then(html => {
+        feed.insertAdjacentHTML('beforeend', html);
+        currentPage = nextPage;
+        loadingEl.style.display = 'none';
+        loading = false;
+        checkIfDone(html);
+      })
+      .catch(() => { loadingEl.style.display = 'none'; loading = false; });
+  }
+
+  function checkIfDone(html) {
+    fetch('{{ url_for("dashboard") }}?' + new URLSearchParams({page: currentPage+1, ajax:'1', search:search, genre:genre}).toString())
+      .then(r => r.text())
+      .then(t => {
+        if (!t.trim()) { hasNext = false; endEl.style.display = 'block'; }
+      }).catch(()=>{});
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!hasNext) return;
+    const scrollPos = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 400;
+    if (scrollPos >= threshold) loadMore();
+  });
+})();
+</script>
+
+{% else %}
+<div class="empty-state">
+  <div class="icon">📭</div>
+  <p>No stories found.</p>
+  <a href="{{ url_for('write') }}" class="btn btn-green">Write the First One</a>
+</div>
+{% endif %}
+{% endblock %}

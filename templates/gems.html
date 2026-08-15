@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}My Gems — WritersWorld{% endblock %}
+{% block page_title %}My Gems{% endblock %}
+{% block content %}
+
+<div class="card" style="text-align:center; margin-bottom:20px;">
+  <div style="font-size:2.5rem; color:#00CFFF;">💎 {{ current_user.gems or 0 }}</div>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-top:4px;">Your gem balance</p>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+  <button class="btn btn-green" onclick="watchAd()" id="watchAdBtn">📺 Watch Ad (+3 gems)</button>
+  <a href="{{ url_for('gems_buy') }}" class="btn btn-outline" style="text-align:center;">💳 Buy Gems</a>
+</div>
+
+<div id="adResult" style="text-align:center; margin-bottom:20px; font-size:0.9rem;"></div>
+
+<div class="card">
+  <h3 style="color:var(--green); margin-bottom:12px;">📜 Recent Transactions</h3>
+  {% if transactions %}
+  {% for tx in transactions %}
+  <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
+    <div>
+      <div>{{ tx.detail }}</div>
+      <div style="color:var(--text-dim); font-size:0.75rem;">{{ tx.created_at.strftime('%d %b %Y %H:%M') }}</div>
+    </div>
+    <div style="color:{% if tx.amount > 0 %}#00C853{% else %}#FF4455{% endif %}; font-weight:700;">
+      {{ '+' if tx.amount > 0 else '' }}{{ tx.amount }}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p style="color:var(--text-dim); font-size:0.85rem;">No transactions yet.</p>
+  {% endif %}
+</div>
+
+<script>
+function watchAd() {
+  const btn = document.getElementById('watchAdBtn');
+  const result = document.getElementById('adResult');
+  btn.disabled = true;
+  btn.textContent = '⏳ Loading ad...';
+  // Placeholder: real ad SDK would show a video here before calling the endpoint.
+  setTimeout(() => {
+    fetch('{{ url_for("gems_watch_ad") }}', {method:'POST'})
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          result.innerHTML = '<span style="color:#00C853;">✅ Earned ' + data.earned + ' gems! New balance: ' + data.new_balance + '</span>';
+          setTimeout(() => location.reload(), 1500);
+        }
+        btn.disabled = false;
+        btn.textContent = '📺 Watch Ad (+3 gems)';
+      });
+  }, 1000);
+}
+</script>
+{% endblock %}

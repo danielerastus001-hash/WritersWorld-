@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}History — WritersWorld{% endblock %}
+{% block page_title %}Announcements & History{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+  <h3 style="color:var(--green); margin:0;">📢 Announcements</h3>
+  <a href="{{ url_for('history') }}" class="btn btn-outline btn-sm">✓ Read All</a>
+</div>
+{% if announcements %}
+{% for a in announcements %}
+<div class="announcement-card">
+  <h4>{{ a.title }}</h4>
+  <p style="font-size:0.78rem; color:var(--text-dim); margin-bottom:8px;">{{ a.date }}</p>
+  <p style="font-size:0.9rem; line-height:1.6;">{{ a.body }}</p>
+  {% if a.image %}
+  <img src="{{ url_for('static', filename='uploads/' + a.image) }}" alt="announcement image">
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">📢</div>
+  <p>No announcements yet.</p>
+</div>
+{% endif %}
+
+<h3 style="color:var(--green); margin:30px 0 16px;">🏆 All Competitions</h3>
+{% if competitions %}
+{% for comp in competitions %}
+<div class="comp-card">
+  <span class="comp-status status-{{ comp.status() }}">{{ comp.status() }}</span>
+  <h4 style="color:var(--green); margin:8px 0;">{{ comp.title }}</h4>
+  <div class="comp-dates">
+    <span>📅 Start: {{ comp.start_date.strftime('%d %b %Y') }}</span>
+    <span>🏁 End: {{ comp.end_date.strftime('%d %b %Y') }}</span>
+    <span>🏆 Winners: {{ comp.winners_date.strftime('%d %b %Y') }}</span>
+  </div>
+  <a href="{{ url_for('competition_view', comp_id=comp.id) }}" class="btn btn-outline btn-sm" style="margin-top:10px; display:inline-block;">View Details</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">🏆</div>
+  <p>No competitions yet.</p>
+</div>
+{% endif %}
+{% endblock %}

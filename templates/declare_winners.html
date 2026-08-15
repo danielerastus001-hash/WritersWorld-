@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Declare Winners — {{ comp.title }}{% endblock %}
+{% block page_title %}Declare Winners{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <h3 style="color:var(--green);">🏆 {{ comp.title }}</h3>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('competition_view', comp_id=comp.id) }}" class="btn btn-outline btn-sm">View Competition</a>
+    <a href="{{ url_for('admin_panel') }}" class="btn btn-gray btn-sm">← Admin</a>
+  </div>
+</div>
+
+{% if winners %}
+<div class="card" style="margin-bottom:20px; border-color:var(--green);">
+  <h4 style="color:var(--green); margin-bottom:14px;">🎖 Current Winners</h4>
+  {% set pos_icons = {1: '🥇', 2: '🥈', 3: '🥉'} %}
+  {% for w in winners|sort(attribute='position') %}
+  <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+    <div style="font-size:1.8rem;">{{ pos_icons.get(w.position, '🏅') }}</div>
+    <div style="flex:1;">
+      <div style="color:var(--green); font-weight:700;">{{ w.entry.title }}</div>
+      <div style="color:var(--text-dim); font-size:0.8rem;">by {{ w.user.username }}</div>
+      {% if w.admin_note %}
+      <div style="color:var(--text-dim); font-size:0.78rem; margin-top:2px; font-style:italic;">{{ w.admin_note }}</div>
+      {% endif %}
+    </div>
+    <div style="color:var(--green); font-weight:700; font-size:1.1rem;">
+      {% if w.position == 1 %}1st Place
+      {% elif w.position == 2 %}2nd Place
+      {% elif w.position == 3 %}3rd Place
+      {% else %}Position {{ w.position }}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:20px;">
+  <h4 style="color:var(--green); margin-bottom:14px;">➕ Declare a Winner</h4>
+  <form method="POST">
+    <div class="form-group">
+      <label>Position</label>
+      <select name="position">
+        <option value="1">🥇 1st Place</option>
+        <option value="2">🥈 2nd Place</option>
+        <option value="3">🥉 3rd Place</option>
+        <option value="4">4th Place</option>
+        <option value="5">5th Place</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Winning Entry</label>
+      <input type="text" id="entrySearch" placeholder="🔍 Search by title or author..." style="margin-bottom:8px;" oninput="filterEntries()">
+      <select name="entry_id" id="entrySelect">
+        {% for entry in entries %}
+        <option value="{{ entry.id }}" data-search="{{ (entry.title + ' ' + entry.user.username)|lower }}">{{ entry.title }} — by {{ entry.user.username }}</option>
+        {% endfor %}
+      </select>
+      <script>
+      function filterEntries() {
+        const q = document.getElementById('entrySearch').value.toLowerCase();
+        const opts = document.getElementById('entrySelect').options;
+        for (let i = 0; i < opts.length; i++) {
+          const match = opts[i].getAttribute('data-search') && opts[i].getAttribute('data-search').includes(q);
+          opts[i].style.display = (q === '' || match) ? '' : 'none';
+        }
+      }
+      </script>
+    </div>
+    <div class="form-group">
+      <label>Admin Note (optional)</label>
+      <input type="text" name="note" placeholder="Why this entry won...">
+    </div>
+    <button type="submit" class="btn btn-green">🏆 Declare Winner</button>
+  </form>
+</div>
+
+<div class="card">
+  <h4 style="color:var(--green); margin-bottom:14px;">📚 All Entries ({{ entries|length }})</h4>
+  {% for entry in entries %}
+  <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+      <div>
+        <div style="color:var(--text); font-weight:600; font-size:0.9rem;">{{ entry.title }}</div>
+        <div style="color:var(--text-dim); font-size:0.78rem; margin-top:2px;">
+          by {{ entry.user.username }} · {{ entry.submitted_at.strftime('%d %b %Y') }}
+          · {{ entry.reviews|length }} peer reviews
+        </div>
+      </div>
+      <a href="{{ url_for('read_story', story_id=entry.id) if false else '/story/' + entry.id|string }}" class="btn btn-outline btn-sm">👁 Read</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

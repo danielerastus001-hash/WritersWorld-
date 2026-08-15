@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ comp.title }} — WritersWorld{% endblock %}
+{% block page_title %}Competition{% endblock %}
+{% block content %}
+{% if comp.image %}
+<img src="{{ url_for('static', filename='uploads/' + comp.image) }}" style="width:100%; max-height:250px; object-fit:cover; border-radius:10px; margin-bottom:16px;" alt="competition">
+{% endif %}
+
+<div class="card" style="margin-bottom:20px;">
+  <span class="comp-status status-{{ comp.status() }}">{{ comp.status() }}</span>
+  <h2 style="color:var(--green); margin:10px 0;">{{ comp.title }}</h2>
+  <p style="font-size:0.92rem; line-height:1.7; margin-bottom:14px;">{{ comp.description }}</p>
+  <div class="comp-dates">
+    <span>📅 Start Date: {{ comp.start_date.strftime('%d %B %Y') }}</span>
+    <span>🏁 End Date: {{ comp.end_date.strftime('%d %B %Y') }}</span>
+    <span>🏆 Winners Announced: {{ comp.winners_date.strftime('%d %B %Y') }}</span>
+    <span>📝 Entries: {{ entries|length }}</span>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+    {% if current_user.is_authenticated %}
+      {% set comp_winners = [] %}
+{% if current_user.is_authenticated and current_user.is_admin %}
+<div style="margin-bottom:12px;">
+  <a href="{{ url_for('declare_winners', comp_id=comp.id) }}" class="btn btn-green btn-sm">🏆 Declare Winners</a>
+  <a href="{{ url_for('competition_winners', comp_id=comp.id) }}" class="btn btn-outline btn-sm">View Winners</a>
+</div>
+{% endif %}
+{% if comp.status() == 'CURRENT' %}
+        {% if user_entry %}
+        <a href="{{ url_for('competition_enter', comp_id=comp.id) }}" class="btn btn-outline">✏️ Edit My Entry</a>
+        {% else %}
+        <a href="{{ url_for('competition_enter', comp_id=comp.id) }}" class="btn btn-green">✍ Apply Now</a>
+        {% endif %}
+      {% elif comp.status() == 'UPCOMING' %}
+      <span class="btn btn-gray">Opens {{ comp.start_date.strftime('%d %b %Y') }}</span>
+      {% else %}
+      <span class="btn btn-gray">Competition Closed</span>
+      {% endif %}
+    {% else %}
+    <a href="{{ url_for('login') }}" class="btn btn-green">Login to Enter</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if user_entry %}
+<div class="card" style="border-color:var(--green); margin-bottom:20px;">
+  <h3 style="color:var(--green); margin-bottom:8px;">✅ Your Entry: {{ user_entry.title }}</h3>
+  <p style="font-size:0.85rem; color:var(--text-dim);">Submitted {{ user_entry.submitted_at.strftime('%d %b %Y %H:%M') }}</p>
+  {% if user_entry.expert_review %}
+  <span style="background:#1a1a4a; color:#8888ff; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-right:6px;">Expert Review Requested</span>
+  {% endif %}
+  {% if user_entry.peer_review %}
+  <span style="background:var(--green-dark); color:var(--green); padding:2px 8px; border-radius:12px; font-size:0.75rem;">Peer Review Requested</span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if user_entry %}
+{% set expert = namespace(review=none) %}
+{% for entry in entries %}
+  {% if entry.id == user_entry.id %}
+    {% for er in entry.reviews if er.__class__.__name__ == 'ExpertReview' %}
+      {% set expert.review = er %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+{% endif %}
+
+{% if entries %}
+<h3 style="color:var(--green); margin-bottom:14px;">📚 Submissions ({{ entries|length }})</h3>
+{% for entry in entries %}
+<div class="card story-card">
+  <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <h3 style="color:var(--text);">{{ entry.title }}</h3>
+    <span class="text-dim" style="font-size:0.8rem;">by {{ entry.user.username }}</span>
+  </div>
+  <p class="excerpt">{{ entry.content[:150] }}</p>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+    {% if current_user.is_authenticated and current_user.id != entry.user_id and entry.peer_review %}
+    <a href="{{ url_for('peer_review', entry_id=entry.id) }}" class="btn btn-outline btn-sm">📝 Peer Review</a>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

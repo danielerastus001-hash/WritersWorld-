@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}WritersWorld — Where Stories Live{% endblock %}
+{% block page_title %}Home{% endblock %}
+{% block content %}
+<div class="home-hero">
+  <h1>✍ WritersWorld</h1>
+  <p>A place where stories come alive. Write, share, and discover amazing stories from writers around the world.</p>
+  <div class="home-buttons">
+    <a href="{{ url_for('signup') }}" class="btn btn-green">Get Started Free</a>
+    <a href="{{ url_for('login') }}" class="btn btn-outline">Sign In</a>
+  </div>
+  <div style="margin-top:48px; display:flex; gap:32px; flex-wrap:wrap; justify-content:center;">
+    <div style="text-align:center;">
+      <div style="font-size:2rem;">✏️</div>
+      <div style="color:var(--green); font-weight:700; margin-top:8px;">Write</div>
+      <div style="color:var(--text-dim); font-size:0.85rem;">Your story, your way</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:2rem;">📖</div>
+      <div style="color:var(--green); font-weight:700; margin-top:8px;">Read</div>
+      <div style="color:var(--text-dim); font-size:0.85rem;">Thousands of stories</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:2rem;">🏆</div>
+      <div style="color:var(--green); font-weight:700; margin-top:8px;">Compete</div>
+      <div style="color:var(--text-dim); font-size:0.85rem;">Win writing competitions</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:2rem;">🤖</div>
+      <div style="color:var(--green); font-weight:700; margin-top:8px;">AI Assist</div>
+      <div style="color:var(--text-dim); font-size:0.85rem;">Aegis helps you write better</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

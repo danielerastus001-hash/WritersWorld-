@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}My Stories — WritersWorld{% endblock %}
+{% block page_title %}My Stories{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <span class="text-dim">{{ stories|length }} total stories</span>
+  <a href="{{ url_for('write') }}" class="btn btn-green">✏️ Write New Story</a>
+</div>
+
+{% if stories %}
+{% for story in stories %}
+<div class="card story-card">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+    <h3><a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green);">{{ story.title }}</a></h3>
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      <span class="genre-tag">{{ story.genre }}</span>
+      {% if story.is_published %}
+      <span style="background:#0a2a1a; color:#00ff88; padding:2px 8px; border-radius:12px; font-size:0.75rem;">Published</span>
+      {% elif story.pending_republish %}
+      <span style="background:#2a2a0a; color:#ffcc00; padding:2px 8px; border-radius:12px; font-size:0.75rem;">Pending Approval</span>
+      {% else %}
+      <span style="background:#2a2a2a; color:#888; padding:2px 8px; border-radius:12px; font-size:0.75rem;">Draft</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="meta">
+    <span>👁 {{ story.views }}</span>
+    <span>♥ {{ story.like_count() }}</span>
+    <span>💬 {{ story.comment_count() }}</span>
+    <span>{{ story.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  {% if story.unpublish_reason and not story.is_published %}
+  <div style="background:#2a0a0a; border:1px solid #aa2233; border-radius:6px; padding:10px; font-size:0.85rem; color:#ff4455; margin-top:6px;">
+    ⚠️ Unpublished: {{ story.unpublish_reason }}
+  </div>
+  {% endif %}
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+    <a href="{{ url_for('edit_story', story_id=story.id) }}" class="btn btn-outline btn-sm">✏️ Edit</a>
+    {% if not story.pending_republish %}
+    <form method="POST" action="{{ url_for('toggle_publish', story_id=story.id) }}" style="display:inline;">
+      <button type="submit" class="btn btn-sm {% if story.is_published %}btn-gray{% else %}btn-green{% endif %}">
+        {% if story.is_published %}Unpublish{% else %}Publish{% endif %}
+      </button>
+    </form>
+    {% endif %}
+    <form method="POST" action="{{ url_for('delete_story', story_id=story.id) }}" id="del{{ story.id }}" style="display:inline;">
+      <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('del{{ story.id }}', 'Delete this story permanently?')">🗑 Delete</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">✏️</div>
+  <p>You have not written any stories yet.</p>
+  <a href="{{ url_for('write') }}" class="btn btn-green">Write Your First Story</a>
+</div>
+{% endif %}
+{% endblock %}

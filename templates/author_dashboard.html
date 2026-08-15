@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}My Stats — WritersWorld{% endblock %}
+{% block page_title %}My Stats{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="big-num">{{ total_views }}</span>
+    <span class="label">Total Views</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ total_likes }}</span>
+    <span class="label">Total Likes</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ total_comments }}</span>
+    <span class="label">Comments</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ followers }}</span>
+    <span class="label">Followers</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ following }}</span>
+    <span class="label">Following</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ published|length }}</span>
+    <span class="label">Published</span>
+  </div>
+  <div class="stat-card">
+    <span class="big-num">{{ drafts|length }}</span>
+    <span class="label">Drafts</span>
+  </div>
+</div>
+
+{% if top_stories %}
+<div class="card">
+  <h3 style="color:var(--green); margin-bottom:14px;">🏆 Top Stories by Views</h3>
+  {% for story in top_stories %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+    <div>
+      <a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--text); font-weight:600; font-size:0.9rem;">{{ story.title }}</a>
+      <div class="text-dim" style="font-size:0.78rem; margin-top:2px;">
+        ♥ {{ story.like_count() }} · 💬 {{ story.comment_count() }}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="color:var(--green); font-weight:700;">{{ story.views }}</div>
+      <div class="text-dim" style="font-size:0.75rem;">views</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+  <a href="{{ url_for('write') }}" class="btn btn-green">✏️ Write New Story</a>
+  <a href="{{ url_for('my_stories') }}" class="btn btn-outline">📖 My Stories</a>
+  <a href="{{ url_for('profile', user_id=current_user.id) }}" class="btn btn-gray">👤 My Profile</a>
+</div>
+{% endblock %}

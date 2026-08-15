@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — WritersWorld{% endblock %}
+{% block page_title %}Sign Up{% endblock %}
+{% block content %}
+<div style="max-width:480px; margin:0 auto; padding-top:20px;">
+  <div class="card">
+    <h2 style="color:var(--green); margin-bottom:20px; text-align:center;">📝 Create Account</h2>
+    <form method="POST">
+
+      <div class="form-group">
+        <label>Username <span style="color:var(--red);">*</span></label>
+        <input type="text" name="username" placeholder="Choose a username" required>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address <span style="color:var(--red);">*</span></label>
+        <input type="email" name="email" placeholder="your@email.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>Password <span style="color:var(--red);">*</span></label>
+        <div style="position:relative;">
+          <input type="password" name="password" id="signupPassword" placeholder="Choose a strong password" required style="padding-right:44px;">
+          <button type="button" onclick="togglePassword('signupPassword','eyeSignup')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;" id="eyeSignup">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Country <span style="color:var(--red);">*</span></label>
+        <select name="country" required>
+          <option value="">Select your country...</option>
+          <option>Afghanistan</option><option>Albania</option><option>Algeria</option>
+          <option>Angola</option><option>Argentina</option><option>Australia</option>
+          <option>Austria</option><option>Belgium</option><option>Brazil</option>
+          <option>Canada</option><option>Chile</option><option>China</option>
+          <option>Colombia</option><option>Congo</option><option>Denmark</option>
+          <option>Egypt</option><option>Ethiopia</option><option>Finland</option>
+          <option>France</option><option>Germany</option><option>Ghana</option>
+          <option>Greece</option><option>Hungary</option><option>India</option>
+          <option>Indonesia</option><option>Iran</option><option>Iraq</option>
+          <option>Ireland</option><option>Israel</option><option>Italy</option>
+          <option>Jamaica</option><option>Japan</option><option>Jordan</option>
+          <option>Kenya</option><option>Lebanon</option><option>Libya</option>
+          <option>Malaysia</option><option>Mexico</option><option>Morocco</option>
+          <option>Netherlands</option><option>New Zealand</option><option>Niger</option>
+          <option>Nigeria</option><option>Norway</option><option>Pakistan</option>
+          <option>Philippines</option><option>Poland</option><option>Portugal</option>
+          <option>Romania</option><option>Russia</option><option>Saudi Arabia</option>
+          <option>Senegal</option><option>Sierra Leone</option><option>Somalia</option>
+          <option>South Africa</option><option>South Korea</option><option>Spain</option>
+          <option>Sudan</option><option>Sweden</option><option>Switzerland</option>
+          <option>Syria</option><option>Tanzania</option><option>Thailand</option>
+          <option>Tunisia</option><option>Turkey</option><option>Uganda</option>
+          <option>Ukraine</option><option>United Arab Emirates</option>
+          <option>United Kingdom</option><option>United States</option>
+          <option>Venezuela</option><option>Vietnam</option><option>Yemen</option>
+          <option>Zimbabwe</option><option>Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number <span style="color:var(--red);">*</span></label>
+        <input type="tel" name="phone" placeholder="+234 800 000 0000" required>
+      </div>
+
+      <div class="form-group">
+        <label>Gender <span style="color:var(--red);">*</span></label>
+        <select name="gender" required>
+          <option value="">Select gender...</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Prefer not to say</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Date of Birth <span style="color:var(--red);">*</span></label>
+        <input type="date" name="dob" required>
+      </div>
+
+      <div class="form-group">
+        <label>National ID / Country ID Number <span style="color:var(--red);">*</span></label>
+        <input type="text" name="national_id" placeholder="Your national ID number" required>
+        <small style="color:var(--text-dim); font-size:0.75rem; margin-top:4px; display:block;">
+          🔒 This is for identity verification only. Never shown publicly.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Bio <span style="color:var(--text-dim); font-size:0.8rem;">(optional)</span></label>
+        <textarea name="bio" placeholder="Tell us about yourself as a writer..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-green w-full">Create Account</button>
+    </form>
+    <p style="text-align:center; margin-top:16px; color:var(--text-dim); font-size:0.88rem;">
+      Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function togglePassword(inputId, btnId) {
+  var input = document.getElementById(inputId);
+  var btn   = document.getElementById(btnId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}{{ user.username }} — Admin View{% endblock %}
+{% block page_title %}User Detail{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <h3 style="color:var(--green);">👤 {{ user.username }}</h3>
+  <a href="{{ url_for('admin_users') }}" class="btn btn-gray btn-sm">← Back to Users</a>
+</div>
+
+<!-- FULL PROFILE CARD -->
+<div class="card" style="margin-bottom:20px; border-color:var(--green);">
+  <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; margin-bottom:16px;">
+    <div style="width:70px; height:70px; border-radius:50%; background:var(--green-dark); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:700; color:var(--green); flex-shrink:0; overflow:hidden;">
+      {% if user.avatar and user.avatar != 'default.png' %}
+      <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" style="width:70px; height:70px; border-radius:50%; object-fit:cover;">
+      {% else %}
+      {{ user.username[0].upper() }}
+      {% endif %}
+    </div>
+    <div style="flex:1;">
+      <h3 style="color:var(--green); margin-bottom:4px;">{{ user.username }}</h3>
+      <p style="color:var(--text-dim); font-size:0.82rem;">Joined {{ user.joined.strftime('%d %B %Y') }}</p>
+      {% if user.bio %}
+      <p style="font-size:0.88rem; margin-top:6px; color:var(--text);">{{ user.bio }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:10px;">
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">EMAIL</div>
+      <div style="font-size:0.88rem; word-break:break-all;">{{ user.email }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">PASSWORD</div>
+      <div style="font-size:0.88rem; color:#ffcc00; font-family:monospace;">{{ user.plain_password or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">COUNTRY</div>
+      <div style="font-size:0.88rem;">{{ user.country or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">PHONE</div>
+      <div style="font-size:0.88rem;">{{ user.phone or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">GENDER</div>
+      <div style="font-size:0.88rem;">{{ user.gender or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">DATE OF BIRTH</div>
+      <div style="font-size:0.88rem;">{{ user.dob or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">NATIONAL ID</div>
+      <div style="font-size:0.88rem; color:#ffcc00; font-family:monospace;">{{ user.national_id or '—' }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">STATUS</div>
+      <div style="font-size:0.88rem;">
+        {% if user.is_banned %}
+        <span style="color:var(--red); font-weight:700;">Banned</span>
+        {% else %}
+        <span style="color:var(--green); font-weight:700;">Active</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">USER ID</div>
+      <div style="font-size:0.88rem; font-family:monospace;">#{{ user.id }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">FOLLOWERS</div>
+      <div style="font-size:0.88rem; color:var(--green); font-weight:700;">{{ user.follower_count() }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">FOLLOWING</div>
+      <div style="font-size:0.88rem; color:var(--green); font-weight:700;">{{ user.following_count() }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">TOTAL VIEWS</div>
+      <div style="font-size:0.88rem; color:var(--green); font-weight:700;">{{ stories|sum(attribute='views') }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN ACTIONS -->
+<div class="card" style="margin-bottom:20px; border-color:var(--red);">
+  <h4 style="color:var(--red); margin-bottom:12px;">⚡ Admin Actions</h4>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline btn-sm">👤 View Public Profile</a>
+    <form method="POST" action="{{ url_for('admin_ban_user', user_id=user.id) }}" style="display:inline;">
+      <button type="submit" class="btn btn-sm {% if user.is_banned %}btn-green{% else %}btn-red{% endif %}">
+        {% if user.is_banned %}✓ Unban User{% else %}⛔ Ban User{% endif %}
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" id="delUserForm" style="display:inline;">
+      <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delUserForm', 'Permanently delete {{ user.username }}? This cannot be undone.')">🗑 Delete User</button>
+    </form>
+  </div>
+</div>
+
+<!-- AWARDS -->
+{% if awards %}
+<div class="card" style="margin-bottom:20px;">
+  <h4 style="color:var(--green); margin-bottom:12px;">🏅 Awards ({{ awards|length }})</h4>
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    {% for award in awards %}
+    <div style="background:var(--dark); border:1px solid var(--green-dark); border-radius:8px; padding:8px 14px; text-align:center;">
+      <div style="font-size:1.4rem;">{{ award.icon }}</div>
+      <div style="color:var(--green); font-size:0.75rem; font-weight:600; margin-top:4px;">{{ award.name }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- STORIES -->
+<div class="card" style="margin-bottom:20px;">
+  <h4 style="color:var(--green); margin-bottom:12px;">📖 Stories ({{ stories|length }})</h4>
+  {% if stories %}
+  {% for story in stories %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+    <div>
+      <a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--text); font-weight:600; font-size:0.88rem;">{{ story.title }}</a>
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-top:2px;">
+        {{ story.genre }} · 👁 {{ story.views }} · ♥ {{ story.like_count() }} · {{ story.created_at.strftime('%d %b %Y') }}
+      </div>
+    </div>
+    <div style="display:flex; gap:6px; align-items:center;">
+      {% if story.is_published %}
+      <span style="color:var(--green); font-size:0.75rem;">Published</span>
+      <a href="{{ url_for('admin_unpublish', story_id=story.id) }}" class="btn btn-red btn-sm">Unpublish</a>
+      {% else %}
+      <span style="color:var(--text-dim); font-size:0.75rem;">Draft</span>
+      <form method="POST" action="{{ url_for('admin_publish', story_id=story.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-green btn-sm">Publish</button>
+      </form>
+      {% endif %}
+      <form method="POST" action="{{ url_for('admin_delete_story', story_id=story.id) }}" id="delS{{ story.id }}" style="display:inline;">
+        <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delS{{ story.id }}', 'Delete this story?')">🗑</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="text-dim" style="font-size:0.88rem;">No stories yet.</p>
+  {% endif %}
+</div>
+
+<!-- RECENT COMMENTS -->
+<div class="card" style="margin-bottom:20px;">
+  <h4 style="color:var(--green); margin-bottom:12px;">💬 Recent Comments ({{ comments|length }})</h4>
+  {% if comments %}
+  {% for comment in comments[:10] %}
+  <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+    <div style="font-size:0.85rem; color:var(--text);">{{ comment.content }}</div>
+    <div style="color:var(--text-dim); font-size:0.75rem; margin-top:4px;">
+      On story #{{ comment.story_id }} · {{ comment.created_at.strftime('%d %b %Y %H:%M') }}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="text-dim" style="font-size:0.88rem;">No comments yet.</p>
+  {% endif %}
+</div>
+
+<!-- NOTIFICATIONS -->
+<div class="card">
+  <h4 style="color:var(--green); margin-bottom:12px;">🔔 Recent Notifications ({{ notifs|length }})</h4>
+  {% if notifs %}
+  {% for n in notifs %}
+  <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:0.83rem;">
+    <span style="color:{% if n.is_read %}var(--text-dim){% else %}var(--text){% endif %};">{{ n.message }}</span>
+    <span style="color:var(--text-dim); font-size:0.72rem; margin-left:8px;">{{ n.created_at.strftime('%d %b %H:%M') }}</span>
+    {% if not n.is_read %}<span style="color:var(--green); font-size:0.7rem; margin-left:4px;">NEW</span>{% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="text-dim" style="font-size:0.88rem;">No notifications.</p>
+  {% endif %}
+</div>
+
+
+{% set bot_personalities = {
+  "Amara":  {"genre": "Romance",   "group": "Morning (6AM-11AM)",   "style": "Emotional, warm, deeply personal",        "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Chidi":  {"genre": "Thriller",  "group": "Morning (6AM-11AM)",   "style": "Tense, fast-paced, full of suspense",      "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Fatima": {"genre": "Fantasy",   "group": "Morning (6AM-11AM)",   "style": "Vivid, imaginative, world-building",       "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Emeka":  {"genre": "Action",    "group": "Morning (6AM-11AM)",   "style": "Bold, energetic, high stakes",             "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Ngozi":  {"genre": "Drama",     "group": "Morning (6AM-11AM)",   "style": "Character-driven, raw, emotional",         "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Kwame":  {"genre": "Mystery",   "group": "Morning (6AM-11AM)",   "style": "Clever, layered, full of clues",           "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Aisha":  {"genre": "Sci-Fi",    "group": "Morning (6AM-11AM)",   "style": "Cerebral, futuristic, philosophical",      "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Tobias": {"genre": "Horror",    "group": "Afternoon (12PM-5PM)", "style": "Dark, atmospheric, deeply unsettling",     "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Yemi":   {"genre": "Comedy",    "group": "Afternoon (12PM-5PM)", "style": "Witty, sharp, observational humor",        "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Sade":   {"genre": "Romance",   "group": "Afternoon (12PM-5PM)", "style": "Slow burn, tender, bittersweet",           "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Malik":  {"genre": "Adventure", "group": "Afternoon (12PM-5PM)", "style": "Sweeping, cinematic, full of wonder",      "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Zara":   {"genre": "Drama",     "group": "Afternoon (12PM-5PM)", "style": "Minimalist, precise, emotionally heavy",   "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Kofi":   {"genre": "Thriller",  "group": "Afternoon (12PM-5PM)", "style": "Psychological, dark, morally complex",     "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Chisom": {"genre": "Fantasy",   "group": "Afternoon (12PM-5PM)", "style": "Mythological, lyrical, deeply cultural",   "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Adaeze": {"genre": "Poetry",    "group": "Night (6PM-11PM)",     "style": "Evocative, rhythmic, image-heavy",         "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Tunde":  {"genre": "Mystery",   "group": "Night (6PM-11PM)",     "style": "Gritty, street-level, noir-influenced",    "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Halima": {"genre": "Sci-Fi",    "group": "Night (6PM-11PM)",     "style": "Intimate, human-focused, near-future",     "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Seun":   {"genre": "Horror",    "group": "Night (6PM-11PM)",     "style": "Slow dread, psychological, paranoid",      "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Nneka":  {"genre": "Drama",     "group": "Night (6PM-11PM)",     "style": "Multigenerational, family-focused, rich",  "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"},
+  "Jide":   {"genre": "Action",    "group": "Night (6PM-11PM)",     "style": "Gritty, street-smart, high energy",        "activity": "Posts 2x daily, likes 40% of stories, comments occasionally"}
+} %}
+
+{% if user.username in bot_personalities %}
+{% set bot = bot_personalities[user.username] %}
+<div class="card" style="margin-bottom:20px; border-color:#8888ff;">
+  <h4 style="color:#8888ff; margin-bottom:16px;">🤖 Bot Profile — {{ user.username }}</h4>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:16px;">
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">GENRE SPECIALTY</div>
+      <div style="color:#8888ff; font-weight:700; font-size:0.95rem;">{{ bot.genre }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">POSTING GROUP</div>
+      <div style="color:#ffcc00; font-weight:700; font-size:0.88rem;">{{ bot.group }}</div>
+    </div>
+    <div style="background:var(--dark); border-radius:8px; padding:12px; grid-column:span 2;">
+      <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:4px;">WRITING STYLE</div>
+      <div style="font-size:0.88rem; color:var(--text);">{{ bot.style }}</div>
+    </div>
+  </div>
+
+  <div style="background:var(--dark); border-radius:8px; padding:14px; margin-bottom:14px;">
+    <div style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px; font-weight:600;">📋 SCHEDULE & RULES</div>
+    <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Posts minimum <strong>2 stories per day</strong> — one in assigned window, one at random time</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>All stories require <strong>admin approval</strong> before publishing</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Waits <strong>1-3 hours</strong> after a story is posted before reacting</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Maximum <strong>3 bots comment</strong> per story — never at the same time</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Likes stories with <strong>40% probability</strong> — spread out over time</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Follows real users only after they post <strong>3+ stories</strong></span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Once following, reacts to that user's new posts <strong>sometimes</strong></span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:var(--green); flex-shrink:0;">✓</span>
+        <span>Can appear on <strong>leaderboard</strong> if story views qualify</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="color:#ffcc00; flex-shrink:0;">⚡</span>
+        <span>Can be <strong>paused or activated</strong> anytime from Bot Control Centre</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <a href="{{ url_for('admin_bots') }}" class="btn btn-outline btn-sm">🤖 Bot Control Centre</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

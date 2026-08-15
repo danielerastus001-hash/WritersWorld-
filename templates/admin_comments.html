@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}All Comments — WritersWorld{% endblock %}
+{% block page_title %}All Comments{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <span class="text-dim">{{ comments.total }} total comments</span>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('comments_read_all') }}" class="btn btn-outline btn-sm">✓ Read All</a>
+    <a href="{{ url_for('admin_panel') }}" class="btn btn-gray btn-sm">← Back to Admin</a>
+  </div>
+</div>
+
+{% if comments.items %}
+{% for comment in comments.items %}
+<div class="card" style="margin-bottom:10px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+    <div style="flex:1;">
+      <div style="font-size:0.9rem; color:var(--text); margin-bottom:6px;">{{ comment.content }}</div>
+      <div style="font-size:0.75rem; color:var(--text-dim);">
+        By <a href="{{ url_for('admin_user_detail', user_id=comment.author.id) }}" style="color:var(--green);">{{ comment.author.username }}</a>
+        · On <a href="{{ url_for('read_story', story_id=comment.story_id) }}" style="color:var(--green);">Story #{{ comment.story_id }}</a>
+        · {{ comment.created_at.strftime('%d %b %Y %H:%M') }}
+      </div>
+    </div>
+    <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" style="display:inline;">
+      <button type="submit" class="btn btn-red btn-sm">🗑 Delete</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+<div class="pagination">
+  {% if comments.has_prev %}
+  <a href="{{ url_for('admin_comments', page=comments.prev_num) }}">← Prev</a>
+  {% endif %}
+  <span class="current">{{ comments.page }} / {{ comments.pages }}</span>
+  {% if comments.has_next %}
+  <a href="{{ url_for('admin_comments', page=comments.next_num) }}">Next →</a>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="icon">💬</div>
+  <p>No comments yet.</p>
+</div>
+{% endif %}
+{% endblock %}

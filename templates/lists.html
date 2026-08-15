@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Reading Lists — WritersWorld{% endblock %}
+{% block page_title %}Reading Lists{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <span class="text-dim">{{ lists|length }} lists</span>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="color:var(--green); margin-bottom:14px;">➕ Create New List</h3>
+  <form method="POST" action="{{ url_for('create_list') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+    <input type="text" name="name" placeholder="List name..." style="flex:1; min-width:180px; background:var(--dark); border:1px solid var(--border); color:var(--text); padding:9px 14px; border-radius:6px; outline:none;">
+    <button type="submit" class="btn btn-green">Create</button>
+  </form>
+</div>
+
+{% if lists %}
+{% for lst in lists %}
+<div class="list-card">
+  <div>
+    <h4><a href="{{ url_for('view_list', list_id=lst.id) }}" style="color:var(--green);">{{ lst.name }}</a></h4>
+    <span class="text-dim" style="font-size:0.8rem;">{{ lst.stories|length }} stories · {{ lst.created_at.strftime('%d %b %Y') }}</span>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="{{ url_for('view_list', list_id=lst.id) }}" class="btn btn-outline btn-sm">View</a>
+    <form method="POST" action="{{ url_for('delete_list', list_id=lst.id) }}" id="delList{{ lst.id }}">
+      <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delList{{ lst.id }}', 'Delete this reading list?')">Delete</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">🔖</div>
+  <p>No reading lists yet. Create one to save stories.</p>
+</div>
+{% endif %}
+{% endblock %}

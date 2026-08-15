@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}All Stories — WritersWorld{% endblock %}
+{% block page_title %}All Stories{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <span class="text-dim">{{ stories.total }} total stories</span>
+  <a href="{{ url_for('admin_panel') }}" class="btn btn-gray btn-sm">← Back to Admin</a>
+</div>
+
+<form method="GET" style="margin-bottom:20px;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by title..." style="flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); padding:9px 14px; border-radius:6px; outline:none; min-width:180px;">
+    <button type="submit" class="btn btn-green">Search</button>
+    {% if search %}
+    <a href="{{ url_for('admin_stories') }}" class="btn btn-gray">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if stories.items %}
+{% for story in stories.items %}
+<div class="card story-card" style="margin-bottom:12px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+    <div style="flex:1;">
+      <a href="{{ url_for('read_story', story_id=story.id) }}" style="color:var(--green); font-weight:700; font-size:0.95rem;">{{ story.title }}</a>
+      <div style="color:var(--text-dim); font-size:0.78rem; margin-top:4px;">
+        by <a href="{{ url_for('admin_user_detail', user_id=story.author.id) }}" style="color:var(--green);">{{ story.author.username }}</a>
+        · {{ story.genre }}
+        · 👁 {{ story.views }}
+        · ♥ {{ story.like_count() }}
+        · 💬 {{ story.comment_count() }}
+        · {{ story.created_at.strftime('%d %b %Y') }}
+      </div>
+      {% if story.unpublish_reason %}
+      <div style="color:var(--red); font-size:0.78rem; margin-top:4px;">Unpublished: {{ story.unpublish_reason }}</div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      {% if story.is_published %}
+      <span style="color:var(--green); font-size:0.75rem; font-weight:600;">Published</span>
+      <a href="{{ url_for('admin_unpublish', story_id=story.id) }}" class="btn btn-red btn-sm">Unpublish</a>
+      {% elif story.pending_republish %}
+      <span style="color:var(--yellow); font-size:0.75rem; font-weight:600;">Pending</span>
+      <form method="POST" action="{{ url_for('admin_approve_republish', story_id=story.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-green btn-sm">Approve</button>
+      </form>
+      {% else %}
+      <span style="color:var(--text-dim); font-size:0.75rem;">Draft</span>
+      <form method="POST" action="{{ url_for('admin_publish', story_id=story.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-green btn-sm">Publish</button>
+      </form>
+      {% endif %}
+      <form method="POST" action="{{ url_for('admin_delete_story', story_id=story.id) }}" id="delS{{ story.id }}" style="display:inline;">
+        <button type="button" class="btn btn-red btn-sm" onclick="confirmDelete('delS{{ story.id }}', 'Delete this story?')">🗑</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<div class="pagination">
+  {% if stories.has_prev %}
+  <a href="{{ url_for('admin_stories', page=stories.prev_num, search=search) }}">← Prev</a>
+  {% endif %}
+  <span class="current">{{ stories.page }} / {{ stories.pages }}</span>
+  {% if stories.has_next %}
+  <a href="{{ url_for('admin_stories', page=stories.next_num, search=search) }}">Next →</a>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="icon">📚</div>
+  <p>No stories found.</p>
+</div>
+{% endif %}
+{% endblock %}

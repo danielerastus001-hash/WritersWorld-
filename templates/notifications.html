@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Notifications — WritersWorld{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <div>
+    <span class="text-dim">{{ notifications|length }} total · </span>
+    <span style="color:var(--green); font-weight:700;">{{ notifications|selectattr('is_read','equalto',false)|list|length }} unread</span>
+  </div>
+  <a href="{{ url_for('notifications') }}" class="btn btn-outline btn-sm">✓ Read All</a>
+</div>
+
+{% if notifications %}
+{% for n in notifications %}
+<a href="{{ url_for('mark_read', notif_id=n.id) }}" style="text-decoration:none; display:block; margin-bottom:8px;">
+  <div style="background:var(--card); border:1px solid {% if not n.is_read %}var(--green){% else %}var(--border){% endif %}; border-left:4px solid {% if not n.is_read %}var(--green){% else %}var(--border){% endif %}; border-radius:8px; padding:12px; display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+    <div style="width:8px; height:8px; border-radius:50%; background:{% if not n.is_read %}var(--green){% else %}var(--border){% endif %}; margin-top:6px; flex-shrink:0;"></div>
+    <div style="flex:1;">
+      <p style="font-size:0.9rem; margin-bottom:4px; color:{% if not n.is_read %}var(--text){% else %}var(--text-dim){% endif %}; font-weight:{% if not n.is_read %}600{% else %}400{% endif %};">
+        {{ n.message }}
+      </p>
+      <span style="font-size:0.75rem; color:var(--text-dim);">
+        {{ n.created_at.strftime('%d %b %Y %H:%M') }}
+      </span>
+      {% if not n.is_read %}
+      <span style="background:var(--green); color:var(--black); font-size:0.68rem; font-weight:700; padding:1px 6px; border-radius:8px; margin-left:6px;">NEW</span>
+      {% endif %}
+    </div>
+    <span style="font-size:1.2rem; flex-shrink:0;">
+      {% if n.type == 'like' %}♥
+      {% elif n.type == 'comment' %}💬
+      {% elif n.type == 'follow' %}👤
+      {% elif n.type == 'announcement' %}📢
+      {% elif n.type == 'competition' %}🏆
+      {% elif n.type == 'warning' %}⚠️
+      {% elif n.type == 'success' %}✅
+      {% elif n.type == 'message' %}✉️
+      {% elif n.type == 'review' %}📝
+      {% else %}🔔
+      {% endif %}
+    </span>
+  </div>
+</a>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="icon">🔔</div>
+  <p>No notifications yet.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard — WritersWorld{% endblock %}
+{% block page_title %}Leaderboard{% endblock %}
+{% block content %}
+
+{% set ranks = [
+  ("💎", "Diamond",   "#00CFFF"),
+  ("💠", "Sapphire",  "#0066FF"),
+  ("♦️",  "Ruby",      "#FF1744"),
+  ("⭐", "Emerald",   "#00C853"),
+  ("🔮", "Amethyst",  "#AA00FF"),
+  ("🥇", "Gold",      "#FFD700"),
+  ("🌟", "Platinum",  "#E8E8E8"),
+  ("🥈", "Silver",    "#C0C0C0"),
+  ("🥉", "Bronze",    "#CD7F32"),
+  ("✨", "Pearl",     "#F5F5DC")
+] %}
+
+<p class="text-dim" style="font-size:0.88rem; margin-bottom:20px;">
+  Top 10 authors ranked from highest to lowest by total story views.
+</p>
+
+{% if users %}
+{% for user in users %}
+{% set r = ranks[loop.index0] if loop.index0 < ranks|length else ("🏅","Ranked","#888") %}
+<div style="background:var(--card); border:1px solid var(--border); border-left:4px solid {{ r[2] }}; border-radius:10px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:14px;">
+
+  <div style="font-size:1.8rem; width:38px; text-align:center; flex-shrink:0;">{{ r[0] }}</div>
+
+  <div style="width:44px; height:44px; border-radius:50%; background:var(--green-dark); border:2px solid {{ r[2] }}; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color:{{ r[2] }}; flex-shrink:0; overflow:hidden;">
+    {% if user.avatar and user.avatar != 'default.png' %}
+    <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" style="width:44px; height:44px; object-fit:cover; border-radius:50%;">
+    {% else %}
+    {{ user.username[0].upper() }}
+    {% endif %}
+  </div>
+
+  <div style="flex:1; min-width:0;">
+    <a href="{{ url_for('profile', user_id=user.id) }}" style="color:var(--text); font-weight:700; font-size:0.95rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ user.username }}</a>
+    <div style="color:{{ r[2] }}; font-size:0.75rem; font-weight:700; margin-top:2px;">#{{ loop.index }} · {{ r[1] }} Rank</div>
+    <div class="text-dim" style="font-size:0.76rem; margin-top:2px;">
+      {{ user.stories|selectattr('is_published')|list|length }} stories · {{ user.follower_count() }} followers
+    </div>
+  </div>
+
+  <div style="text-align:right; flex-shrink:0;">
+    {% set pub = user.stories|selectattr('is_published')|list %}
+    {% set v = pub|sum(attribute='views') %}
+    {% set l = pub|map(attribute='likes')|map('length')|sum %}
+    {% set c = pub|map(attribute='comments')|map('length')|sum %}
+    <div style="color:{{ r[2] }}; font-weight:800; font-size:1.2rem;">{{ v + (l*3) + (c*5) }}</div>
+    <div class="text-dim" style="font-size:0.68rem;">engagement</div>
+    <div style="font-size:0.68rem; color:var(--text-dim); margin-top:2px;">
+      👁{{ v }} ♥{{ l }} 💬{{ c }}
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<div style="margin-top:24px; background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:16px;">
+  <p style="color:var(--green); font-weight:700; margin-bottom:12px; font-size:0.9rem;">🏆 Rank Tiers (Highest → Lowest)</p>
+  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    {% for icon, name, color in ranks %}
+    <span style="background:var(--card); border:1px solid {{ color }}; color:{{ color }}; padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:600;">{{ icon }} {{ name }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="icon">📈</div>
+  <p>No authors yet. Be the first!</p>
+  <a href="{{ url_for('write') }}" class="btn btn-green">Start Writing</a>
+</div>
+{% endif %}
+{% endblock %}

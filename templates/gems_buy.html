@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Buy Gems — WritersWorld{% endblock %}
+{% block page_title %}Buy Gems{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('gems_page') }}" class="btn btn-gray btn-sm" style="margin-bottom:16px;">← Back to Gems</a>
+
+{% if not payment_ready %}
+<div class="card" style="border-color:#ffaa00; margin-bottom:16px;">
+  <p style="color:#ffaa00; font-size:0.85rem;">⚠️ Payments are being set up. You can watch ads to earn gems for free in the meantime.</p>
+</div>
+{% endif %}
+
+<div style="display:grid; gap:12px;">
+  {% for pkg in packages %}
+  <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-size:1.3rem; color:#00CFFF;">💎 {{ pkg.gems }} gems</div>
+      <div style="color:var(--text-dim); font-size:0.85rem;">₦{{ '{:,}'.format(pkg.price_ngn) }}</div>
+    </div>
+    <button class="btn btn-green" disabled style="opacity:0.5; cursor:not-allowed;" title="Payment coming soon">
+      Pay
+    </button>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
