@@ -64,6 +64,12 @@
     {% endfor %}
   {% endif %}
 {% endfor %}
+{% if expert.review %}
+<div class="card" style="border-left:3px solid #8888ff; margin-bottom:20px;">
+  <h4 style="color:#8888ff; margin-bottom:8px;">🎓 Expert Review</h4>
+  <p style="white-space:pre-wrap;">{{ expert.review.content }}</p>
+</div>
+{% endif %}
 {% endif %}
 
 {% if entries %}
