@@ -49,6 +49,18 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs('announcements', exist_ok=True)
 
 db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+    admin = User.query.filter_by(email=ADMIN_EMAIL.lower()).first()
+    if not admin:
+        admin = User(
+            username="Dan",
+            email=ADMIN_EMAIL.lower(),
+            password=generate_password_hash("2222"),
+            is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
