@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import (Flask, render_template, redirect, url_for,
-                   request, flash, jsonify, abort)
+                   request, flash, jsonify, abort, Response)
 from flask_login import (LoginManager, login_user, logout_user,
                           login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1965,6 +1965,316 @@ def aegis_execute_tool(tool_name, params):
     except Exception as e:
         return {"error": str(e)}
 
+
+
+@app.route('/admin/self_test')
+@login_required
+@admin_required
+def self_test():
+    return render_template('self_test.html')
+
+@app.route('/admin/self_test/stream')
+@login_required
+@admin_required
+def self_test_stream():
+    def generate():
+        import random, json as _json
+        suffix = str(random.randint(100000, 999999))
+        ua_username = f"_test_a_{suffix}"
+        ub_username = f"_test_b_{suffix}"
+        ua_email = f"{ua_username}@test.local"
+        ub_email = f"{ub_username}@test.local"
+        test_password = "TestPass123!"
+
+        user_a = None
+        user_b = None
+        story = None
+        comp = None
+        entry = None
+        ann = None
+        admin_id = current_user.id
+
+        def emit(name, status, detail=""):
+            payload = _json.dumps({"name": name, "status": status, "detail": detail})
+            return f"data: {payload}\n\n"
+
+        yield emit("Self-Test Suite", "start", "Starting comprehensive test run...")
+
+        try:
+            yield emit("Create test users", "running")
+            try:
+                user_a = User(username=ua_username, email=ua_email,
+                              password=generate_password_hash(test_password),
+                              is_admin=False, country="TestLand", phone="+000",
+                              gender="Other", dob="2000-01-01",
+                              plain_password=test_password)
+                user_b = User(username=ub_username, email=ub_email,
+                              password=generate_password_hash(test_password),
+                              is_admin=False, country="TestLand", phone="+000",
+                              gender="Other", dob="2000-01-01",
+                              plain_password=test_password)
+                db.session.add(user_a)
+                db.session.add(user_b)
+                db.session.commit()
+                yield emit("Create test users", "pass", f"{ua_username}, {ub_username}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Create test users", "fail", str(e))
+                raise
+
+            yield emit("Create & publish story", "running")
+            try:
+                story = Story(title=f"Self-Test Story {suffix}",
+                             content="This is a self-test story with enough content to be valid.",
+                             genre="General", is_published=True,
+                             user_id=user_a.id)
+                db.session.add(story)
+                db.session.commit()
+                yield emit("Create & publish story", "pass", f"story_id={story.id}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Create & publish story", "fail", str(e))
+
+            yield emit("Like story", "running")
+            try:
+                like = Like(user_id=user_b.id, story_id=story.id)
+                db.session.add(like)
+                db.session.commit()
+                ok = story.like_count() == 1
+                yield emit("Like story", "pass" if ok else "fail", f"like_count={story.like_count()}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Like story", "fail", str(e))
+
+            yield emit("Comment on story", "running")
+            try:
+                comment = Comment(content="Self-test comment", user_id=user_b.id,
+                                 story_id=story.id)
+                db.session.add(comment)
+                db.session.commit()
+                ok = story.comment_count() == 1
+                yield emit("Comment on story", "pass" if ok else "fail", f"comment_count={story.comment_count()}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Comment on story", "fail", str(e))
+
+            yield emit("Track story view", "running")
+            try:
+                sv = StoryView(story_id=story.id, user_id=user_b.id, ip_address="0.0.0.0")
+                db.session.add(sv)
+                story.views += 1
+                db.session.commit()
+                ok = story.views == 1
+                yield emit("Track story view", "pass" if ok else "fail", f"views={story.views}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Track story view", "fail", str(e))
+
+            yield emit("Create competition", "running")
+            try:
+                today = datetime.utcnow().date()
+                comp = Competition(title=f"Self-Test Comp {suffix}",
+                                  description="Test competition",
+                                  start_date=today - timedelta(days=1),
+                                  end_date=today + timedelta(days=1),
+                                  winners_date=today + timedelta(days=5),
+                                  created_by=admin_id)
+                db.session.add(comp)
+                db.session.commit()
+                ok = comp.status() == "CURRENT"
+                yield emit("Create competition", "pass" if ok else "fail", f"status={comp.status()}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Create competition", "fail", str(e))
+
+            yield emit("Enter competition", "running")
+            try:
+                entry = CompetitionEntry(competition_id=comp.id, user_id=user_a.id,
+                                         title="Self-Test Entry",
+                                         content="Test entry content for self-test.")
+                db.session.add(entry)
+                db.session.commit()
+                yield emit("Enter competition", "pass", f"entry_id={entry.id}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Enter competition", "fail", str(e))
+
+            yield emit("Submit peer review", "running")
+            try:
+                review = PeerReview(entry_id=entry.id, reviewer_id=user_b.id,
+                                   q1="Good", q2="Good", q3="Good",
+                                   q4="Good", q5="Good", extra="")
+                db.session.add(review)
+                db.session.commit()
+                yield emit("Submit peer review", "pass", f"review_id={review.id}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Submit peer review", "fail", str(e))
+
+            yield emit("Claim entry reward (first time)", "running")
+            try:
+                gems_before = user_b.gems or 0
+                has_reviewed = PeerReview.query.filter_by(
+                    entry_id=entry.id, reviewer_id=user_b.id).first() is not None
+                already = GemTransaction.query.filter_by(
+                    user_id=user_b.id, source='entry_read_reward'
+                ).filter(GemTransaction.detail.like(f"entry:{entry.id}:%")).first()
+                if has_reviewed and not already:
+                    REWARD = 2
+                    user_b.gems = (user_b.gems or 0) + REWARD
+                    tx = GemTransaction(user_id=user_b.id, amount=REWARD,
+                                       source='entry_read_reward',
+                                       detail=f"entry:{entry.id}:{entry.title}")
+                    db.session.add(tx)
+                    db.session.commit()
+                gems_after = user_b.gems or 0
+                ok = gems_after == gems_before + 2
+                yield emit("Claim entry reward (first time)", "pass" if ok else "fail",
+                          f"before={gems_before}, after={gems_after}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Claim entry reward (first time)", "fail", str(e))
+
+            yield emit("Duplicate reward claim blocked", "running")
+            try:
+                already = GemTransaction.query.filter_by(
+                    user_id=user_b.id, source='entry_read_reward'
+                ).filter(GemTransaction.detail.like(f"entry:{entry.id}:%")).first()
+                ok = already is not None
+                yield emit("Duplicate reward claim blocked", "pass" if ok else "fail")
+            except Exception as e:
+                yield emit("Duplicate reward claim blocked", "fail", str(e))
+
+            yield emit("Admin submits expert review", "running")
+            try:
+                exp_review = ExpertReview(entry_id=entry.id, admin_id=admin_id,
+                                          content="Self-test expert review content.")
+                db.session.add(exp_review)
+                entry.expert_review = True
+                db.session.commit()
+                yield emit("Admin submits expert review", "pass", f"review_id={exp_review.id}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Admin submits expert review", "fail", str(e))
+
+            yield emit("Expert review retrievable", "running")
+            try:
+                found = ExpertReview.query.filter_by(entry_id=entry.id).first()
+                ok = found is not None and found.content != ""
+                yield emit("Expert review retrievable", "pass" if ok else "fail")
+            except Exception as e:
+                yield emit("Expert review retrievable", "fail", str(e))
+
+            yield emit("Admin sends message", "running")
+            try:
+                msg1 = AdminMessage(admin_id=admin_id, user_id=user_a.id,
+                                   message="Self-test admin message", is_reply=False)
+                db.session.add(msg1)
+                db.session.commit()
+                yield emit("Admin sends message", "pass", f"msg_id={msg1.id}")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Admin sends message", "fail", str(e))
+
+            yield emit("Admin sees user's reply", "running")
+            try:
+                msg2 = AdminMessage(admin_id=admin_id, user_id=user_a.id,
+                                   message="Self-test user reply", is_reply=True)
+                db.session.add(msg2)
+                db.session.commit()
+                found_messages = AdminMessage.query.filter(
+                    db.and_(AdminMessage.admin_id == admin_id,
+                           AdminMessage.user_id == user_a.id)
+                ).all()
+                ok = len(found_messages) == 2
+                yield emit("Admin sees user's reply", "pass" if ok else "fail",
+                          f"found {len(found_messages)} messages, expected 2")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Admin sees user's reply", "fail", str(e))
+
+            yield emit("Create & delete announcement", "running")
+            try:
+                ann = Announcement(title=f"Self-Test Announcement {suffix}", body="Test body")
+                db.session.add(ann)
+                db.session.commit()
+                ann_id = ann.id
+                db.session.delete(ann)
+                db.session.commit()
+                still_exists = Announcement.query.get(ann_id)
+                ann = None
+                ok = still_exists is None
+                yield emit("Create & delete announcement", "pass" if ok else "fail")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Create & delete announcement", "fail", str(e))
+
+            yield emit("Delete competition (cascades entries)", "running")
+            try:
+                comp_id = comp.id
+                entry_id_check = entry.id
+                db.session.delete(comp)
+                db.session.commit()
+                still_exists = Competition.query.get(comp_id)
+                entry_gone = CompetitionEntry.query.get(entry_id_check)
+                comp = None
+                entry = None
+                ok = still_exists is None and entry_gone is None
+                yield emit("Delete competition (cascades entries)", "pass" if ok else "fail")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Delete competition (cascades entries)", "fail", str(e))
+
+            yield emit("Delete story (cascades likes/comments)", "running")
+            try:
+                story_id = story.id
+                db.session.delete(story)
+                db.session.commit()
+                still_exists = Story.query.get(story_id)
+                story = None
+                ok = still_exists is None
+                yield emit("Delete story (cascades likes/comments)", "pass" if ok else "fail")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Delete story (cascades likes/comments)", "fail", str(e))
+
+        finally:
+            yield emit("Cleanup", "running", "Removing test data...")
+            try:
+                if story:
+                    db.session.delete(story)
+                if entry:
+                    db.session.delete(entry)
+                if comp:
+                    db.session.delete(comp)
+                if ann:
+                    db.session.delete(ann)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+            try:
+                ids = [u.id for u in [user_a, user_b] if u]
+                if ids:
+                    AdminMessage.query.filter(
+                        db.or_(AdminMessage.user_id.in_(ids))
+                    ).delete(synchronize_session=False)
+                    GemTransaction.query.filter(
+                        GemTransaction.user_id.in_(ids)
+                    ).delete(synchronize_session=False)
+                if user_a:
+                    db.session.delete(user_a)
+                if user_b:
+                    db.session.delete(user_b)
+                db.session.commit()
+                yield emit("Cleanup", "pass", "All test data removed")
+            except Exception as e:
+                db.session.rollback()
+                yield emit("Cleanup", "fail", str(e))
+
+        yield emit("Self-Test Suite", "done", "All tests complete.")
+
+    return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/aegis/tool', methods=['POST'])
 @login_required

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Self-Test — WritersWorld{% endblock %}
+{% block page_title %}🧪 Self-Test Suite{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:16px;">
+  <p style="color:var(--text-dim); font-size:0.88rem;">
+    Runs a full end-to-end test of core features using temporary test accounts.
+    All test data is automatically cleaned up afterward.
+  </p>
+  <button class="btn btn-green" id="runBtn" onclick="runSelfTest()" style="margin-top:10px;">▶ Run Self-Test</button>
+</div>
+
+<div id="terminal" style="background:#0a0a0a; border:1px solid var(--border); border-radius:10px; padding:16px; font-family:monospace; font-size:0.82rem; min-height:200px; max-height:65vh; overflow-y:auto; white-space:pre-wrap; line-height:1.6;">
+  <span style="color:#555;">Press "Run Self-Test" to begin...</span>
+</div>
+
+<div id="summary" style="margin-top:16px; font-weight:700; font-size:1rem;"></div>
+
+<script>
+function runSelfTest() {
+  const terminal = document.getElementById('terminal');
+  const summary = document.getElementById('summary');
+  const btn = document.getElementById('runBtn');
+  terminal.innerHTML = '';
+  summary.innerHTML = '';
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+
+  let passCount = 0;
+  let totalCount = 0;
+
+  const evtSource = new EventSource("{{ url_for('self_test_stream') }}");
+
+  evtSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    const line = document.createElement('div');
+
+    let color = '#888';
+    let icon = '→';
+    if (data.status === 'running') {
+      color = '#00CFFF';
+      icon = '⏳';
+    } else if (data.status === 'pass') {
+      color = '#00C853';
+      icon = '✅';
+      passCount++;
+      totalCount++;
+    } else if (data.status === 'fail') {
+      color = '#FF4455';
+      icon = '❌';
+      totalCount++;
+    } else if (data.status === 'start') {
+      color = '#00CFFF';
+      icon = '🚀';
+    } else if (data.status === 'done') {
+      color = '#FFD700';
+      icon = '🏁';
+    }
+
+    line.style.color = color;
+    let text = `${icon} ${data.name}`;
+    if (data.detail) text += ` — ${data.detail}`;
+    line.textContent = text;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+
+    if (data.status === 'done') {
+      evtSource.close();
+      btn.disabled = false;
+      btn.textContent = '▶ Run Self-Test Again';
+      const allPassed = passCount === totalCount;
+      summary.style.color = allPassed ? '#00C853' : '#FF4455';
+      summary.textContent = `${passCount}/${totalCount} tests passed`;
+    }
+  };
+
+  evtSource.onerror = function() {
+    const line = document.createElement('div');
+    line.style.color = '#FF4455';
+    line.textContent = '❌ Connection error — test run interrupted.';
+    terminal.appendChild(line);
+    evtSource.close();
+    btn.disabled = false;
+    btn.textContent = '▶ Run Self-Test';
+  };
+}
+</script>
+{% endblock %}

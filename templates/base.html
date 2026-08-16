@@ -39,6 +39,7 @@
       <a href="/admin/activity" style="display:flex;align-items:center;gap:6px;padding:8px 16px 8px 28px;color:#ff8866;font-size:0.85rem;border-left:3px solid #ff8866;">📋 Activity Log
         {% if activity_badge and activity_badge > 0 %}<span class="notif-dot"></span>{% endif %}
       </a>
+      <a href="{{ url_for('self_test') }}" style="display:flex;align-items:center;gap:6px;padding:8px 16px 8px 28px;color:#ff8866;font-size:0.85rem;border-left:3px solid #ff8866;">🧪 Self-Test</a>
       <div class="sidebar-divider"></div>
       {% endif %}
       {% if current_user.is_authenticated %}
