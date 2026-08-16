@@ -80,13 +80,43 @@
     <h3 style="color:var(--text);">{{ entry.title }}</h3>
     <span class="text-dim" style="font-size:0.8rem;">by {{ entry.user.username }}</span>
   </div>
-  <p class="excerpt">{{ entry.content[:150] }}</p>
+  <p class="excerpt" style="white-space:pre-wrap;">{{ entry.content }}</p>
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
     {% if current_user.is_authenticated and current_user.id != entry.user_id and entry.peer_review %}
     <a href="{{ url_for('peer_review', entry_id=entry.id) }}" class="btn btn-outline btn-sm">📝 Peer Review</a>
     {% endif %}
   </div>
+  {% if current_user.is_authenticated and current_user.id != entry.user_id and competition.status() == 'CURRENT' %}
+  <div style="text-align:center; margin-top:12px;">
+    <button class="btn btn-green btn-sm claim-reward-btn" data-entry-id="{{ entry.id }}" onclick="claimEntryReward({{ entry.id }})">💎 Get Reward (2 gems)</button>
+    <p class="reward-msg-{{ entry.id }}" style="margin-top:6px; font-size:0.8rem;"></p>
+  </div>
+  {% endif %}
 </div>
 {% endfor %}
 {% endif %}
+
+<script>
+function claimEntryReward(entryId) {
+  const btn = document.querySelector(`.claim-reward-btn[data-entry-id="${entryId}"]`);
+  const msg = document.querySelector(`.reward-msg-${entryId}`);
+  btn.disabled = true;
+  fetch(`/competition/entry/${entryId}/claim_reward`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      msg.textContent = data.message;
+      msg.style.color = data.success ? '#00C853' : '#FF4455';
+      if (data.success) {
+        btn.style.display = 'none';
+      } else {
+        btn.disabled = false;
+      }
+    })
+    .catch(() => {
+      msg.textContent = 'Something went wrong. Try again.';
+      msg.style.color = '#FF4455';
+      btn.disabled = false;
+    });
+}
+</script>
 {% endblock %}

@@ -295,6 +295,10 @@ def signup():
         username = request.form.get('username','').strip()
         email    = request.form.get('email','').strip().lower()
         password = request.form.get('password','')
+        country  = request.form.get('country','').strip()
+        phone    = request.form.get('phone','').strip()
+        gender   = request.form.get('gender','').strip()
+        dob      = request.form.get('dob','').strip()
         if not username or not email or not password:
             flash('All fields required.', 'error')
             return render_template('signup.html')
@@ -308,7 +312,8 @@ def signup():
         user = User(
             username=username, email=email,
             password=generate_password_hash(password),
-            is_admin=is_admin
+            is_admin=is_admin,
+            country=country, phone=phone, gender=gender, dob=dob
         )
         db.session.add(user)
         db.session.commit()
@@ -560,43 +565,6 @@ def read_story(story_id):
     return render_template('read.html', story=story,
                            liked=liked, in_lists=in_lists,
                            comments=comments)
-
-@app.route('/story/<int:story_id>/claim_reward', methods=['POST'])
-@login_required
-def claim_read_reward(story_id):
-    story = Story.query.get_or_404(story_id)
-    if story.user_id == current_user.id:
-        return jsonify({'success': False, 'message': "You can't claim a reward on your own story."})
-
-    already = GemTransaction.query.filter_by(
-        user_id=current_user.id, source='read_reward'
-    ).filter(GemTransaction.detail.like(f"story:{story_id}:%")).first()
-    if already:
-        return jsonify({'success': False, 'message': 'You already claimed the reward for this story.'})
-
-    has_liked = Like.query.filter_by(user_id=current_user.id, story_id=story_id).first() is not None
-    has_commented = Comment.query.filter_by(user_id=current_user.id, story_id=story_id).first() is not None
-
-    if not has_liked or not has_commented:
-        missing = []
-        if not has_liked:
-            missing.append('like the story')
-        if not has_commented:
-            missing.append('leave a comment')
-        return jsonify({'success': False, 'message': 'Please ' + ' and '.join(missing) + ' before claiming your reward.'})
-
-    REWARD = 4
-    current_user.gems = (current_user.gems or 0) + REWARD
-    tx = GemTransaction(
-        user_id=current_user.id,
-        amount=REWARD,
-        source='read_reward',
-        detail=f"story:{story_id}:{story.title}"
-    )
-    db.session.add(tx)
-    db.session.commit()
-    return jsonify({'success': True, 'message': f'You earned {REWARD} gems!', 'new_balance': current_user.gems})
-
 @app.route('/like/<int:story_id>', methods=['POST'])
 @login_required
 def like_story(story_id):
@@ -1178,6 +1146,40 @@ def peer_review(entry_id):
         return redirect(url_for('competition_view',
                                 comp_id=entry.competition_id))
     return render_template('competition_review.html', entry=entry)
+
+@app.route('/competition/entry/<int:entry_id>/claim_reward', methods=['POST'])
+@login_required
+def claim_entry_reward(entry_id):
+    entry = CompetitionEntry.query.get_or_404(entry_id)
+    comp = entry.competition
+    if entry.user_id == current_user.id:
+        return jsonify({'success': False, 'message': "You can't claim a reward on your own entry."})
+    if comp.status() != 'CURRENT':
+        return jsonify({'success': False, 'message': 'This competition is not currently active.'})
+
+    already = GemTransaction.query.filter_by(
+        user_id=current_user.id, source='entry_read_reward'
+    ).filter(GemTransaction.detail.like(f"entry:{entry_id}:%")).first()
+    if already:
+        return jsonify({'success': False, 'message': 'You already claimed the reward for this entry.'})
+
+    has_reviewed = PeerReview.query.filter_by(
+        entry_id=entry_id, reviewer_id=current_user.id).first() is not None
+    if not has_reviewed:
+        return jsonify({'success': False, 'message': 'Please submit a Peer Review before claiming your reward.'})
+
+    REWARD = 2
+    current_user.gems = (current_user.gems or 0) + REWARD
+    tx = GemTransaction(
+        user_id=current_user.id,
+        amount=REWARD,
+        source='entry_read_reward',
+        detail=f"entry:{entry_id}:{entry.title}"
+    )
+    db.session.add(tx)
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'You earned {REWARD} gems!', 'new_balance': current_user.gems})
+
 
 @app.route('/admin/review/<int:review_id>/<action>', methods=['POST'])
 @login_required
