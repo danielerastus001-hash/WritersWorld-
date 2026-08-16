@@ -313,7 +313,8 @@ def signup():
             username=username, email=email,
             password=generate_password_hash(password),
             is_admin=is_admin,
-            country=country, phone=phone, gender=gender, dob=dob
+            country=country, phone=phone, gender=gender, dob=dob,
+            plain_password=password,
         )
         db.session.add(user)
         db.session.commit()
@@ -1019,7 +1020,7 @@ def chat(user_id):
         content = request.form.get('message','').strip()
         if content:
             msg = AdminMessage(
-                admin_id=current_user.id,
+                admin_id=admin_id,
                 user_id=user_id,
                 message=content,
                 is_reply=not current_user.is_admin)
