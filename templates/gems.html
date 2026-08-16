@@ -8,12 +8,10 @@
   <p style="color:var(--text-dim); font-size:0.85rem; margin-top:4px;">Your gem balance</p>
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
-  <button class="btn btn-green" onclick="watchAd()" id="watchAdBtn">📺 Watch Ad (+3 gems)</button>
-  <a href="{{ url_for('gems_buy') }}" class="btn btn-outline" style="text-align:center;">💳 Buy Gems</a>
+<div class="card" style="margin-bottom:20px; text-align:center;">
+  <p style="color:var(--text); font-size:0.9rem;">📖 Earn <strong>+4 gems</strong> every time you read a new story!</p>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-green" style="margin-top:10px;">Browse Stories</a>
 </div>
-
-<div id="adResult" style="text-align:center; margin-bottom:20px; font-size:0.9rem;"></div>
 
 <div class="card">
   <h3 style="color:var(--green); margin-bottom:12px;">📜 Recent Transactions</h3>
@@ -34,25 +32,4 @@
   {% endif %}
 </div>
 
-<script>
-function watchAd() {
-  const btn = document.getElementById('watchAdBtn');
-  const result = document.getElementById('adResult');
-  btn.disabled = true;
-  btn.textContent = '⏳ Loading ad...';
-  // Placeholder: real ad SDK would show a video here before calling the endpoint.
-  setTimeout(() => {
-    fetch('{{ url_for("gems_watch_ad") }}', {method:'POST'})
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          result.innerHTML = '<span style="color:#00C853;">✅ Earned ' + data.earned + ' gems! New balance: ' + data.new_balance + '</span>';
-          setTimeout(() => location.reload(), 1500);
-        }
-        btn.disabled = false;
-        btn.textContent = '📺 Watch Ad (+3 gems)';
-      });
-  }, 1000);
-}
-</script>
 {% endblock %}

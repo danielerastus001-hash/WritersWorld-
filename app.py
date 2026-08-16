@@ -546,6 +546,16 @@ def read_story(story_id):
                 ip_address=ip)
             db.session.add(sv)
             story.views += 1
+            if current_user.is_authenticated:
+                READ_REWARD = 4
+                current_user.gems = (current_user.gems or 0) + READ_REWARD
+                tx = GemTransaction(
+                    user_id=current_user.id,
+                    amount=READ_REWARD,
+                    source='read_story',
+                    detail=f"Read '{story.title}'"
+                )
+                db.session.add(tx)
             db.session.commit()
             if current_user.is_authenticated:
                 log_activity('view_story', f"{current_user.username} viewed '{story.title}'")
@@ -1402,35 +1412,6 @@ def gems_page():
     transactions = GemTransaction.query.filter_by(
         user_id=current_user.id).order_by(GemTransaction.created_at.desc()).limit(20).all()
     return render_template('gems.html', transactions=transactions)
-
-@app.route('/gems/watch_ad', methods=['POST'])
-@login_required
-def gems_watch_ad():
-    # Placeholder: real ad SDK verification goes here before crediting.
-    # For now this simulates a completed ad view.
-    AD_REWARD = 3
-    current_user.gems = (current_user.gems or 0) + AD_REWARD
-    tx = GemTransaction(
-        user_id=current_user.id,
-        amount=AD_REWARD,
-        source='ad_watch',
-        detail='Watched rewarded ad'
-    )
-    db.session.add(tx)
-    db.session.commit()
-    return jsonify({'success': True, 'new_balance': current_user.gems, 'earned': AD_REWARD})
-
-@app.route('/gems/buy', methods=['GET'])
-@login_required
-def gems_buy():
-    # Payment gateway not yet configured. Page renders purchase options
-    # but the actual "Pay" button is disabled until Paystack/Flutterwave is wired in.
-    packages = [
-        {'gems': 20,  'price_ngn': 500},
-        {'gems': 50,  'price_ngn': 1000},
-        {'gems': 120, 'price_ngn': 2000},
-    ]
-    return render_template('gems_buy.html', packages=packages, payment_ready=False)
 
 @app.route('/notification/read/<int:notif_id>')
 @login_required
