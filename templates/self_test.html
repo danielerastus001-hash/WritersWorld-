@@ -18,6 +18,62 @@
 <div id="summary" style="margin-top:16px; font-weight:700; font-size:1rem;"></div>
 
 <script>
+function statusStyle(status) {
+  if (status === 'running') return {color:'#00CFFF', icon:'⏳'};
+  if (status === 'pass') return {color:'#00C853', icon:'✅'};
+  if (status === 'fail') return {color:'#FF4455', icon:'❌'};
+  if (status === 'start') return {color:'#00CFFF', icon:'🚀'};
+  if (status === 'done') return {color:'#FFD700', icon:'🏁'};
+  return {color:'#888', icon:'→'};
+}
+
+function printLine(terminal, data) {
+  const line = document.createElement('div');
+  const s = statusStyle(data.status);
+  line.style.color = s.color;
+  let text = `${s.icon} ${data.name}`;
+  if (data.detail) text += ` — ${data.detail}`;
+  line.textContent = text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function finishRun(terminal, summary, btn, results) {
+  let passCount = 0, totalCount = 0;
+  results.forEach(r => {
+    if (r.status === 'pass') { passCount++; totalCount++; }
+    else if (r.status === 'fail') { totalCount++; }
+  });
+  btn.disabled = false;
+  btn.textContent = '▶ Run Self-Test Again';
+  const allPassed = passCount === totalCount;
+  summary.style.color = allPassed ? '#00C853' : '#FF4455';
+  summary.textContent = `${passCount}/${totalCount} tests passed`;
+}
+
+function runSelfTestSync(terminal, summary, btn) {
+  const line = document.createElement('div');
+  line.style.color = '#FFD700';
+  line.textContent = '⚠ Live streaming unavailable — running in batch mode...';
+  terminal.appendChild(line);
+
+  fetch("{{ url_for('self_test_sync') }}", {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      const results = data.results || [];
+      results.forEach(r => printLine(terminal, r));
+      finishRun(terminal, summary, btn, results);
+    })
+    .catch(err => {
+      const errLine = document.createElement('div');
+      errLine.style.color = '#FF4455';
+      errLine.textContent = '❌ Batch mode also failed: ' + err;
+      terminal.appendChild(errLine);
+      btn.disabled = false;
+      btn.textContent = '▶ Run Self-Test';
+    });
+}
+
 function runSelfTest() {
   const terminal = document.getElementById('terminal');
   const summary = document.getElementById('summary');
@@ -27,62 +83,37 @@ function runSelfTest() {
   btn.disabled = true;
   btn.textContent = '⏳ Running...';
 
-  let passCount = 0;
-  let totalCount = 0;
+  let receivedAny = false;
+  let results = [];
+  let fallbackTimer = setTimeout(() => {
+    if (!receivedAny) {
+      evtSource.close();
+      runSelfTestSync(terminal, summary, btn);
+    }
+  }, 6000);
 
   const evtSource = new EventSource("{{ url_for('self_test_stream') }}");
 
   evtSource.onmessage = function(event) {
+    receivedAny = true;
+    clearTimeout(fallbackTimer);
     const data = JSON.parse(event.data);
-    const line = document.createElement('div');
-
-    let color = '#888';
-    let icon = '→';
-    if (data.status === 'running') {
-      color = '#00CFFF';
-      icon = '⏳';
-    } else if (data.status === 'pass') {
-      color = '#00C853';
-      icon = '✅';
-      passCount++;
-      totalCount++;
-    } else if (data.status === 'fail') {
-      color = '#FF4455';
-      icon = '❌';
-      totalCount++;
-    } else if (data.status === 'start') {
-      color = '#00CFFF';
-      icon = '🚀';
-    } else if (data.status === 'done') {
-      color = '#FFD700';
-      icon = '🏁';
-    }
-
-    line.style.color = color;
-    let text = `${icon} ${data.name}`;
-    if (data.detail) text += ` — ${data.detail}`;
-    line.textContent = text;
-    terminal.appendChild(line);
-    terminal.scrollTop = terminal.scrollHeight;
+    results.push(data);
+    printLine(terminal, data);
 
     if (data.status === 'done') {
       evtSource.close();
-      btn.disabled = false;
-      btn.textContent = '▶ Run Self-Test Again';
-      const allPassed = passCount === totalCount;
-      summary.style.color = allPassed ? '#00C853' : '#FF4455';
-      summary.textContent = `${passCount}/${totalCount} tests passed`;
+      finishRun(terminal, summary, btn, results);
     }
   };
 
   evtSource.onerror = function() {
-    const line = document.createElement('div');
-    line.style.color = '#FF4455';
-    line.textContent = '❌ Connection error — test run interrupted.';
-    terminal.appendChild(line);
     evtSource.close();
-    btn.disabled = false;
-    btn.textContent = '▶ Run Self-Test';
+    clearTimeout(fallbackTimer);
+    if (!receivedAny || (results.length && results[results.length-1].status !== 'done')) {
+      terminal.innerHTML = '';
+      runSelfTestSync(terminal, summary, btn);
+    }
   };
 }
 </script>
