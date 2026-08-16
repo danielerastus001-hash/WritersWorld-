@@ -35,7 +35,9 @@ app.config['SECRET_KEY']           = 'writersworld-secret-2024'
 app.config['WTF_CSRF_ENABLED']      = False
 _db_url = os.environ.get('DATABASE_URL', 'sqlite:///stories.db')
 if _db_url.startswith('postgres://'):
-    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+    _db_url = _db_url.replace('postgres://', 'postgresql+psycopg://', 1)
+elif _db_url.startswith('postgresql://'):
+    _db_url = _db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER']        = os.path.join('static', 'uploads')
