@@ -33,7 +33,10 @@ from database import (db, User, Story, Like, Comment, Notification,
 app = Flask(__name__)
 app.config['SECRET_KEY']           = 'writersworld-secret-2024'
 app.config['WTF_CSRF_ENABLED']      = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stories.db'
+_db_url = os.environ.get('DATABASE_URL', 'sqlite:///stories.db')
+if _db_url.startswith('postgres://'):
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER']        = os.path.join('static', 'uploads')
 app.config['MAX_CONTENT_LENGTH']   = 5 * 1024 * 1024  # 5MB
