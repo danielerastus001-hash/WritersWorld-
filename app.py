@@ -25,7 +25,7 @@ from database import (db, User, Story, Like, Comment, Notification,
                       ReadingList, AdminMessage, Competition,
                       CompetitionEntry, PeerReview, ExpertReview,
                       StoryView, Award, ActivityLog, ResetRequest,
-                      CompetitionWinner, list_stories, GemTransaction)
+                      CompetitionWinner, list_stories, GemTransaction, Announcement)
 
 # ─────────────────────────────────────────────
 #  APP SETUP
@@ -113,21 +113,16 @@ def add_notification(user_id, message, ntype="info", link=""):
     db.session.commit()
 
 def load_announcements():
-    path = os.path.join('announcements', 'announcements.json')
-    if not os.path.exists(path):
-        return []
-    with open(path) as f:
-        return json.load(f)
+    anns = Announcement.query.order_by(Announcement.created_at.desc()).all()
+    return [{
+        "id": a.id, "title": a.title, "body": a.body, "image": a.image,
+        "date": a.created_at.strftime("%Y-%m-%d %H:%M")
+    } for a in anns]
 
 def save_announcement(title, body, image=""):
-    path  = os.path.join('announcements', 'announcements.json')
-    items = load_announcements()
-    items.insert(0, {
-        "title": title, "body": body, "image": image,
-        "date": datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-    })
-    with open(path, 'w') as f:
-        json.dump(items, f, indent=2)
+    a = Announcement(title=title, body=body, image=image)
+    db.session.add(a)
+    db.session.commit()
 
 def ask_aegis(prompt):
     key = GROQ_API_KEY
@@ -1250,6 +1245,16 @@ def delete_competition(comp_id):
     db.session.delete(comp)
     db.session.commit()
     flash('Competition deleted.', 'success')
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/announcement/delete/<int:ann_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_announcement(ann_id):
+    ann = Announcement.query.get_or_404(ann_id)
+    db.session.delete(ann)
+    db.session.commit()
+    flash('Announcement deleted.', 'success')
     return redirect(url_for('admin_panel'))
 
 # ─────────────────────────────────────────────

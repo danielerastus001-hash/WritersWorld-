@@ -56,6 +56,19 @@
       <button type="submit" class="btn btn-green">📢 Publish Announcement</button>
     </form>
   </div>
+  {% if announcements %}
+  <div style="margin-top:16px;">
+    <h4 style="color:var(--text-dim); font-size:0.85rem; margin-bottom:8px;">Manage Existing Announcements</h4>
+    {% for ann in announcements %}
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+      <span style="font-size:0.88rem;">{{ ann.title }}</span>
+      <form method="POST" action="{{ url_for('delete_announcement', ann_id=ann.id) }}" onsubmit="return confirm('Delete this announcement? This cannot be undone.');" style="display:inline;">
+        <button type="submit" class="btn btn-red btn-sm">🗑 Delete</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- CREATE COMPETITION -->
@@ -90,6 +103,19 @@
       <button type="submit" class="btn btn-green">🏆 Create Competition</button>
     </form>
   </div>
+  {% if competitions %}
+  <div style="margin-top:16px;">
+    <h4 style="color:var(--text-dim); font-size:0.85rem; margin-bottom:8px;">Manage Existing Competitions</h4>
+    {% for comp in competitions %}
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">
+      <span style="font-size:0.88rem;">{{ comp.title }}</span>
+      <form method="POST" action="{{ url_for('delete_competition', comp_id=comp.id) }}" onsubmit="return confirm('Delete this competition? This cannot be undone.');" style="display:inline;">
+        <button type="submit" class="btn btn-red btn-sm">🗑 Delete</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- AEGIS API KEY -->

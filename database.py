@@ -317,6 +317,16 @@ class GemTransaction(db.Model):
     user = db.relationship('User', foreign_keys=[user_id])
 
 # ─────────────────────────────────────────────
+#  ANNOUNCEMENTS
+# ─────────────────────────────────────────────
+class Announcement(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    title      = db.Column(db.String(200), nullable=False)
+    body       = db.Column(db.Text, nullable=False)
+    image      = db.Column(db.String(300), default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# ─────────────────────────────────────────────
 #  STORY VIEW TRACKER (prevent author self-views)
 # ─────────────────────────────────────────────
 class StoryView(db.Model):
