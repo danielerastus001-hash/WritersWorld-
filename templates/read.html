@@ -39,6 +39,13 @@
     <button class="share-btn share-facebook" onclick="shareFacebook(window.location.href)">Facebook</button>
     <button class="share-btn share-copy" onclick="copyLink(window.location.href)">📋 Copy Link</button>
   </div>
+  {% if current_user.is_authenticated and current_user.id != story.user_id %}
+  <div class="card" style="text-align:center; margin:20px 0;">
+    <button class="btn btn-green" id="claimRewardBtn" onclick="claimReward({{ story.id }})">💎 Get Reward</button>
+    <p id="rewardMsg" style="margin-top:10px; font-size:0.85rem;"></p>
+  </div>
+  {% endif %}
+
   <div class="comments-section">
     <h3>💬 Comments ({{ story.comment_count() }})</h3>
     {% if current_user.is_authenticated %}
@@ -69,4 +76,27 @@
     {% endif %}
   </div>
 </div>
+<script>
+function claimReward(storyId) {
+  const btn = document.getElementById('claimRewardBtn');
+  const msg = document.getElementById('rewardMsg');
+  btn.disabled = true;
+  fetch(`/story/${storyId}/claim_reward`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      msg.textContent = data.message;
+      msg.style.color = data.success ? '#00C853' : '#FF4455';
+      if (data.success) {
+        btn.style.display = 'none';
+      } else {
+        btn.disabled = false;
+      }
+    })
+    .catch(() => {
+      msg.textContent = 'Something went wrong. Try again.';
+      msg.style.color = '#FF4455';
+      btn.disabled = false;
+    });
+}
+</script>
 {% endblock %}

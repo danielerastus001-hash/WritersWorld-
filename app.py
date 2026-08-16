@@ -546,16 +546,6 @@ def read_story(story_id):
                 ip_address=ip)
             db.session.add(sv)
             story.views += 1
-            if current_user.is_authenticated:
-                READ_REWARD = 4
-                current_user.gems = (current_user.gems or 0) + READ_REWARD
-                tx = GemTransaction(
-                    user_id=current_user.id,
-                    amount=READ_REWARD,
-                    source='read_story',
-                    detail=f"Read '{story.title}'"
-                )
-                db.session.add(tx)
             db.session.commit()
             if current_user.is_authenticated:
                 log_activity('view_story', f"{current_user.username} viewed '{story.title}'")
@@ -570,6 +560,42 @@ def read_story(story_id):
     return render_template('read.html', story=story,
                            liked=liked, in_lists=in_lists,
                            comments=comments)
+
+@app.route('/story/<int:story_id>/claim_reward', methods=['POST'])
+@login_required
+def claim_read_reward(story_id):
+    story = Story.query.get_or_404(story_id)
+    if story.user_id == current_user.id:
+        return jsonify({'success': False, 'message': "You can't claim a reward on your own story."})
+
+    already = GemTransaction.query.filter_by(
+        user_id=current_user.id, source='read_reward'
+    ).filter(GemTransaction.detail.like(f"story:{story_id}:%")).first()
+    if already:
+        return jsonify({'success': False, 'message': 'You already claimed the reward for this story.'})
+
+    has_liked = Like.query.filter_by(user_id=current_user.id, story_id=story_id).first() is not None
+    has_commented = Comment.query.filter_by(user_id=current_user.id, story_id=story_id).first() is not None
+
+    if not has_liked or not has_commented:
+        missing = []
+        if not has_liked:
+            missing.append('like the story')
+        if not has_commented:
+            missing.append('leave a comment')
+        return jsonify({'success': False, 'message': 'Please ' + ' and '.join(missing) + ' before claiming your reward.'})
+
+    REWARD = 4
+    current_user.gems = (current_user.gems or 0) + REWARD
+    tx = GemTransaction(
+        user_id=current_user.id,
+        amount=REWARD,
+        source='read_reward',
+        detail=f"story:{story_id}:{story.title}"
+    )
+    db.session.add(tx)
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'You earned {REWARD} gems!', 'new_balance': current_user.gems})
 
 @app.route('/like/<int:story_id>', methods=['POST'])
 @login_required
