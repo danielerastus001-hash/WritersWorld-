@@ -27,7 +27,7 @@
 
       <div class="form-group">
         <label>Country <span style="color:var(--red);">*</span></label>
-        <select name="country" required>
+        <select name="country" id="countrySelect" required onchange="updatePhonePlaceholder()">
           <option value="">Select your country...</option>
           <option>Afghanistan</option><option>Albania</option><option>Algeria</option>
           <option>Angola</option><option>Argentina</option><option>Australia</option>
@@ -60,8 +60,36 @@
 
       <div class="form-group">
         <label>Phone Number <span style="color:var(--red);">*</span></label>
-        <input type="tel" name="phone" placeholder="+234 800 000 0000" required>
+        <input type="tel" name="phone" id="phoneInput" placeholder="Select country first..." required>
       </div>
+      <script>
+        const countryCodes = {
+          "Afghanistan":"+93","Albania":"+355","Algeria":"+213","Angola":"+244",
+          "Argentina":"+54","Australia":"+61","Austria":"+43","Belgium":"+32",
+          "Brazil":"+55","Canada":"+1","Chile":"+56","China":"+86","Colombia":"+57",
+          "Congo":"+243","Denmark":"+45","Egypt":"+20","Ethiopia":"+251","Finland":"+358",
+          "France":"+33","Germany":"+49","Ghana":"+233","Greece":"+30","Hungary":"+36",
+          "India":"+91","Indonesia":"+62","Iran":"+98","Iraq":"+964","Ireland":"+353",
+          "Israel":"+972","Italy":"+39","Jamaica":"+1","Japan":"+81","Jordan":"+962",
+          "Kenya":"+254","Lebanon":"+961","Libya":"+218","Malaysia":"+60","Mexico":"+52",
+          "Morocco":"+212","Netherlands":"+31","New Zealand":"+64","Niger":"+227",
+          "Nigeria":"+234","Norway":"+47","Pakistan":"+92","Philippines":"+63",
+          "Poland":"+48","Portugal":"+351","Romania":"+40","Russia":"+7",
+          "Saudi Arabia":"+966","Senegal":"+221","Sierra Leone":"+232","Somalia":"+252",
+          "South Africa":"+27","South Korea":"+82","Spain":"+34","Sudan":"+249",
+          "Sweden":"+46","Switzerland":"+41","Syria":"+963","Tanzania":"+255",
+          "Thailand":"+66","Tunisia":"+216","Turkey":"+90","Uganda":"+256",
+          "Ukraine":"+380","United Arab Emirates":"+971","United Kingdom":"+44",
+          "United States":"+1","Venezuela":"+58","Vietnam":"+84","Yemen":"+967",
+          "Zimbabwe":"+263"
+        };
+        function updatePhonePlaceholder() {
+          const country = document.getElementById('countrySelect').value;
+          const phoneInput = document.getElementById('phoneInput');
+          const code = countryCodes[country];
+          phoneInput.placeholder = code ? code + " 800 000 0000" : "Enter your phone number";
+        }
+      </script>
 
       <div class="form-group">
         <label>Gender <span style="color:var(--red);">*</span></label>
