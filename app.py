@@ -502,6 +502,7 @@ def delete_story(story_id):
     story = Story.query.get_or_404(story_id)
     if story.user_id != current_user.id and not current_user.is_admin:
         abort(403)
+    StoryView.query.filter_by(story_id=story.id).delete()
     db.session.delete(story)
     db.session.commit()
     flash('Story deleted.', 'success')
@@ -1247,6 +1248,9 @@ def create_competition():
 @admin_required
 def delete_competition(comp_id):
     comp = Competition.query.get_or_404(comp_id)
+    entry_ids = [e.id for e in CompetitionEntry.query.filter_by(competition_id=comp.id).all()]
+    if entry_ids:
+        ExpertReview.query.filter(ExpertReview.entry_id.in_(entry_ids)).delete(synchronize_session=False)
     db.session.delete(comp)
     db.session.commit()
     flash('Competition deleted.', 'success')
@@ -2230,6 +2234,10 @@ def _self_test_generator(admin_id):
     finally:
         yield result("Cleanup", "running", "Removing test data...")
         try:
+            if story:
+                StoryView.query.filter_by(story_id=story.id).delete()
+            if entry:
+                ExpertReview.query.filter_by(entry_id=entry.id).delete()
             if story:
                 db.session.delete(story)
             if entry:
