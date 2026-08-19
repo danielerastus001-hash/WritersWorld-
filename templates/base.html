@@ -70,7 +70,7 @@
       <div class="sidebar-divider"></div>
       <a href="{{ url_for('logout') }}" class="logout-link">🚪 Logout</a>
       <div class="sidebar-divider"></div>
-      <div class="ad-slot ad-slot-sidebar" id="sidebarAd">
+      <div class="ad-slot ad-slot-sidebar" id="sidebarAd" style="display:none;">
         <span style="color:var(--text-dim); font-size:0.65rem;">Advertisement</span>
         <!-- AD NETWORK CODE GOES HERE (AdSense/Adsterra snippet) -->
         <div style="background:var(--card); border:1px dashed var(--border); border-radius:6px; height:100px; display:flex; align-items:center; justify-content:center; margin-top:6px;">
@@ -105,7 +105,7 @@
     {% block content %}{% endblock %}
 
     {% if current_user.is_authenticated %}
-    <div class="ad-slot ad-slot-footer" style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+    <div class="ad-slot ad-slot-footer" style="display:none; margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
       <span style="color:var(--text-dim); font-size:0.65rem;">Advertisement</span>
       <!-- AD NETWORK CODE GOES HERE (AdSense/Adsterra snippet) -->
       <div style="background:var(--card); border:1px dashed var(--border); border-radius:6px; height:80px; display:flex; align-items:center; justify-content:center; margin-top:6px;">
