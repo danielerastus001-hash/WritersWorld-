@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}WritersWorld{% endblock %}</title>
+  {% block og_meta %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WritersWorld">
+  <meta property="og:title" content="WritersWorld — Where stories live">
+  <meta property="og:description" content="Read, write, and share original stories on WritersWorld.">
+  <meta property="og:url" content="{{ request.url }}">
+  <meta name="twitter:card" content="summary">
+  {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     .notif-dot{background:#ff0000;border-radius:50%;width:10px;height:10px;display:inline-block;animation:pulse 1.5s infinite;margin-left:6px;}

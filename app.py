@@ -462,12 +462,9 @@ def write():
         if not title or not content:
             flash('Title and content required.', 'error')
             return render_template('write.html', genres=GENRES)
-        cover = ""
-        if 'cover' in request.files:
-            cover = save_upload(request.files['cover'])
         story = Story(
             title=title, content=content, genre=genre,
-            cover=cover, is_published=publish,
+            is_published=publish,
             user_id=current_user.id
         )
         db.session.add(story)
@@ -489,8 +486,6 @@ def edit_story(story_id):
         story.updated_at = datetime.utcnow()
         if story.pending_republish:
             story.pending_republish = False
-        if 'cover' in request.files and request.files['cover'].filename:
-            story.cover = save_upload(request.files['cover'])
         db.session.commit()
         flash('Story updated!', 'success')
         return redirect(url_for('my_stories'))

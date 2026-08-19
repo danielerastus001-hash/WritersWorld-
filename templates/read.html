@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block title %}{{ story.title }} — WritersWorld{% endblock %}
+{% block og_meta %}
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="WritersWorld">
+  <meta property="og:title" content="{{ story.title }} — WritersWorld">
+  <meta property="og:description" content="{{ (story.logline or story.content)[:180] }}">
+  <meta property="og:url" content="{{ request.url }}">
+  {% if story.cover %}
+  <meta property="og:image" content="{{ url_for('static', filename='uploads/' + story.cover, _external=True) }}">
+  {% endif %}
+  <meta name="twitter:card" content="{{ 'summary_large_image' if story.cover else 'summary' }}">
+  <meta name="twitter:title" content="{{ story.title }} — WritersWorld">
+  <meta name="twitter:description" content="{{ (story.logline or story.content)[:180] }}">
+{% endblock %}
 {% block page_title %}Read{% endblock %}
 {% block content %}
 <div class="story-reader">

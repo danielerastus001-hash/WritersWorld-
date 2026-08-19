@@ -7,24 +7,14 @@
     <label>Story Title</label>
     <input type="text" name="title" id="storyTitle" placeholder="Enter your story title..." required value="{{ story.title if story else '' }}">
   </div>
-  <div style="display:flex; gap:12px; flex-wrap:wrap;">
-    <div class="form-group" style="flex:1; min-width:140px;">
-      <label>Genre</label>
-      <select name="genre" id="storyGenre">
-        {% for g in genres %}
-        <option value="{{ g }}" {% if story and story.genre == g %}selected{% endif %}>{{ g }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="form-group" style="flex:1; min-width:140px;">
-      <label>Cover Image (optional)</label>
-      <input type="file" name="cover" id="coverInput" accept="image/*">
-    </div>
+  <div class="form-group">
+    <label>Genre</label>
+    <select name="genre" id="storyGenre">
+      {% for g in genres %}
+      <option value="{{ g }}" {% if story and story.genre == g %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
   </div>
-  <img id="coverPreview" style="display:none; max-height:150px; border-radius:6px; margin-bottom:12px;" alt="cover preview">
-  {% if story and story.cover %}
-  <img src="{{ url_for('static', filename='uploads/' + story.cover) }}" style="max-height:150px; border-radius:6px; margin-bottom:12px;" alt="current cover">
-  {% endif %}
   <div class="form-group">
     <label>Your Story <span id="wordCount" style="color:var(--text-dim); font-size:0.8rem; margin-left:8px;"></span></label>
     <textarea name="content" id="storyContent" class="editor-area" placeholder="Start writing your story here...&#10;&#10;You can use blank lines to separate sections.&#10;No chapters — just write freely." required>{{ story.content if story else '' }}</textarea>
