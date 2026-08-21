@@ -548,6 +548,17 @@ def read_story(story_id):
                 ip_address=ip)
             db.session.add(sv)
             story.views += 1
+            if current_user.is_authenticated:
+                already_rewarded = GemTransaction.query.filter_by(
+                    user_id=current_user.id, source='story_read',
+                    detail=f"story:{story.id}").first()
+                if not already_rewarded:
+                    current_user.gems = (current_user.gems or 0) + 1
+                    gtx = GemTransaction(
+                        user_id=current_user.id, amount=1,
+                        source='story_read',
+                        detail=f"story:{story.id}")
+                    db.session.add(gtx)
             db.session.commit()
             if current_user.is_authenticated:
                 log_activity('view_story', f"{current_user.username} viewed '{story.title}'")
